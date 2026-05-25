@@ -20,9 +20,11 @@ export interface ExpenseForStatus {
 }
 
 export function computeStatus(expense: ExpenseForStatus): StatusType {
-  if (expense.status) return expense.status as StatusType;
+  // Payment facts take priority over any stored status label
   if (expense.paymentDate) return "Paid";
   if (expense.amount > 0 && expense.amountPaid >= expense.amount) return "Paid";
+  // Explicit status (e.g. "Past Due", "Paid as Agreed") comes next
+  if (expense.status) return expense.status as StatusType;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

@@ -299,8 +299,9 @@ export default function DashboardPage() {
   // ── Stats ──────────────────────────────────────────────────────────────────
   function effectivePaid(e: Expense) {
     if (e.amountPaid > 0) return e.amountPaid;
+    if (e.paymentDate) return e.amount;
     const st = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
-    return st === "Paid" ? e.amount : 0;
+    return (st === "Paid" || st === "Paid as Agreed") ? e.amount : 0;
   }
   function effectiveRemaining(e: Expense) {
     return Math.max(0, e.amount - effectivePaid(e));
