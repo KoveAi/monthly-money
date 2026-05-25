@@ -254,7 +254,7 @@ export default function DashboardPage() {
   const annual     = sortAlpha(expenses.filter(e => e.frequency === "annual"  && e.category !== "GR Business" && !isApple(e)));
   const liens      = sortAlpha(expenses.filter(e => e.frequency === "lien"    && !isApple(e)));
   const income     = expenses.filter(e => e.frequency === "income");
-  const grBusiness = sortAlpha(expenses.filter(e => e.category === "GR Business" || isApple(e)));
+  const grBusiness = sortAlpha(expenses.filter(e => e.category === "GR Business" || e.category === "Kove Ai-Business" || isApple(e)));
   const groceries   = sortAlpha(expenses.filter(e => e.frequency === "groceries"));
   const restaurants = sortAlpha(expenses.filter(e => e.frequency === "restaurants"));
   const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
@@ -632,6 +632,15 @@ export default function DashboardPage() {
                         className={inp} style={inpStyle} />
                     </div>
                   ))}
+                  <div>
+                    <label className="block text-xs mb-1.5" style={{ color: WARM_GRAY, letterSpacing: "0.12em" }}>CATEGORY</label>
+                    <select value={addGRForm.category}
+                      onChange={e => setAddGRForm({ ...addGRForm, category: e.target.value })}
+                      className={inp} style={inpStyle}>
+                      <option value="GR Business">GR Business</option>
+                      <option value="Kove Ai-Business">Kove Ai-Business</option>
+                    </select>
+                  </div>
                   <div className="flex items-end">
                     <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: WARM_GRAY, letterSpacing: "0.08em" }}>
                       <input type="checkbox" checked={addGRForm.isRecurring}
