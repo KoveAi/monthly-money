@@ -31,6 +31,7 @@ interface ExpenseTableProps {
   onMoveDown?: (id: string) => void;
   headerColor?: string;
   headerTextColor?: string;
+  categoryOptions?: string[];
 }
 
 function fmt(v: number) {
@@ -305,7 +306,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate }: {
 }
 
 // ─── Main Table ───────────────────────────────────────────────────────────────
-export function ExpenseTable({ expenses, onUpdate, onDelete, onMoveUp, onMoveDown, headerColor = "#0d2b4e", headerTextColor }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, onUpdate, onDelete, onMoveUp, onMoveDown, headerColor = "#0d2b4e", headerTextColor, categoryOptions }: ExpenseTableProps) {
   const [editingRow, setEditingRow]     = useState<Expense | null>(null);
   const [inlineId, setInlineId]         = useState<string | null>(null);
   const [inlineField, setInlineField]   = useState<string | null>(null);
@@ -450,11 +451,21 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, onMoveUp, onMoveDow
                     <td className="px-3 py-2.5 whitespace-nowrap cursor-pointer" style={{ borderRight: `1px solid ${BORDER}` }}
                       onClick={() => !isInline && startInline(expense.id, "category", expense.category)}>
                       {isInline && inlineField === "category" ? (
-                        <input ref={inputRef} type="text" value={inlineValue} autoFocus
-                          onChange={e => setInlineValue(e.target.value)}
-                          onBlur={() => commitInline(expense)}
-                          onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
-                          className="w-28" style={{ fontSize: 11 }} />
+                        categoryOptions ? (
+                          <select value={inlineValue} autoFocus
+                            onChange={e => setInlineValue(e.target.value)}
+                            onBlur={() => commitInline(expense)}
+                            onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
+                            style={{ fontSize: 11, border: `1px solid ${GOLD}`, background: "#fff", color: OBSIDIAN, padding: "2px 4px" }}>
+                            {categoryOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          </select>
+                        ) : (
+                          <input ref={inputRef} type="text" value={inlineValue} autoFocus
+                            onChange={e => setInlineValue(e.target.value)}
+                            onBlur={() => commitInline(expense)}
+                            onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
+                            className="w-28" style={{ fontSize: 11 }} />
+                        )
                       ) : (
                         <span className="text-xs px-2 py-0.5" style={{ background: IVORY, color: WARM_GRAY, border: `1px solid ${BORDER}`, letterSpacing: "0.06em" }}>
                           {saving === expense.id && inlineField === "category" ? "…" : expense.category}

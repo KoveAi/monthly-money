@@ -670,7 +670,8 @@ export default function DashboardPage() {
               )}
               {!loading && (
                 <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete}
-                  headerColor={GR_BEIGE} headerTextColor={OBSIDIAN} />
+                  headerColor={GR_BEIGE} headerTextColor={OBSIDIAN}
+                  categoryOptions={["GR Business", "Kove Ai-Business"]} />
               )}
             </SectionBlock>
 
