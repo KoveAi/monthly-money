@@ -93,6 +93,14 @@ export default function DashboardPage() {
   const [spendInlineId,    setSpendInlineId]    = useState<string | null>(null);
   const [spendInlineField, setSpendInlineField] = useState<string | null>(null);
   const [spendInlineValue, setSpendInlineValue] = useState("");
+  const [searchMonthly,     setSearchMonthly]     = useState("");
+  const [searchGR,          setSearchGR]          = useState("");
+  const [searchAnnual,      setSearchAnnual]       = useState("");
+  const [searchLiens,       setSearchLiens]        = useState("");
+  const [searchGroceries,   setSearchGroceries]    = useState("");
+  const [searchRestaurants, setSearchRestaurants]  = useState("");
+  const [searchIncidental,  setSearchIncidental]   = useState("");
+  const [searchFuel,        setSearchFuel]         = useState("");
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
@@ -109,26 +117,6 @@ export default function DashboardPage() {
     await fetch(`/api/expenses/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
     });
-    await fetchExpenses();
-  }
-
-  async function handleMove(section: Expense[], id: string, dir: "up" | "down") {
-    const idx = section.findIndex(e => e.id === id);
-    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= section.length) return;
-    const allZero = section.every(e => e.sortOrder === 0);
-    if (allZero) {
-      await Promise.all(section.map((e, i) =>
-        fetch(`/api/expenses/${e.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sortOrder: i * 10 }) })
-      ));
-    }
-    const a = section[idx], b = section[swapIdx];
-    const aOrder = allZero ? idx * 10 : a.sortOrder;
-    const bOrder = allZero ? swapIdx * 10 : b.sortOrder;
-    await Promise.all([
-      fetch(`/api/expenses/${a.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sortOrder: bOrder }) }),
-      fetch(`/api/expenses/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sortOrder: aOrder }) }),
-    ]);
     await fetchExpenses();
   }
 
@@ -257,15 +245,20 @@ export default function DashboardPage() {
   }
 
   // ── Split expenses ─────────────────────────────────────────────────────────
-  const monthly    = expenses.filter(e => e.frequency === "monthly" && e.category !== "GR Business");
-  const annual     = expenses.filter(e => e.frequency === "annual"  && e.category !== "GR Business");
-  const liens      = expenses.filter(e => e.frequency === "lien");
+  const sortAlpha   = (arr: Expense[]) => [...arr].sort((a, b) => a.description.localeCompare(b.description));
+  const applySearch = (arr: Expense[], q: string) =>
+    q.trim() ? arr.filter(e => e.description.toLowerCase().includes(q.toLowerCase())) : arr;
+  const isApple = (e: Expense) => e.description.toLowerCase().includes("apple");
+
+  const monthly    = sortAlpha(expenses.filter(e => e.frequency === "monthly" && e.category !== "GR Business" && !isApple(e)));
+  const annual     = sortAlpha(expenses.filter(e => e.frequency === "annual"  && e.category !== "GR Business" && !isApple(e)));
+  const liens      = sortAlpha(expenses.filter(e => e.frequency === "lien"    && !isApple(e)));
   const income     = expenses.filter(e => e.frequency === "income");
-  const grBusiness = expenses.filter(e => e.category  === "GR Business");
-  const groceries   = expenses.filter(e => e.frequency === "groceries");
-  const restaurants = expenses.filter(e => e.frequency === "restaurants");
-  const incidental  = expenses.filter(e => e.frequency === "incidental");
-  const fuel        = expenses.filter(e => e.frequency === "fuel");
+  const grBusiness = sortAlpha(expenses.filter(e => e.category === "GR Business" || isApple(e)));
+  const groceries   = sortAlpha(expenses.filter(e => e.frequency === "groceries"));
+  const restaurants = sortAlpha(expenses.filter(e => e.frequency === "restaurants"));
+  const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
+  const fuel        = sortAlpha(expenses.filter(e => e.frequency === "fuel"));
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   function effectivePaid(e: Expense) {
@@ -328,7 +321,7 @@ export default function DashboardPage() {
   if (iRec > 0)
     insights.push({ text: `Received income covers ${Math.min(coveragePct, 999)}% of current outstanding obligations.`, tone: coveragePct >= 100 ? "positive" : "neutral" });
   if (grPortfolioPct > 0)
-    insights.push({ text: `Gracefully Redefined comprises ${grPortfolioPct}% of total portfolio obligations — ${fmt(grRem)} remaining.`, tone: "neutral" });
+    insights.push({ text: `Business Finances comprises ${grPortfolioPct}% of total portfolio obligations — ${fmt(grRem)} remaining.`, tone: "neutral" });
   if (varSpent > 0)
     insights.push({ text: `Variable spending: ${fmt(grSpent)} groceries · ${fmt(resSpent)} dining · ${fmt(incSpent)} incidental · ${fmt(fuelSpent)} fuel = ${fmt(varSpent)} total deducted from income.`, tone: varSpent > iRec * 0.3 ? "warning" : "neutral" });
   if (netBalance >= 0)
@@ -593,17 +586,25 @@ export default function DashboardPage() {
                 { label: "PAID", value: fmt(mPaid), positive: true },
                 { label: "REMAINING", value: fmt(mRem), negative: mRem > 0 },
               ]} />
+              {openMonthly && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search expenses…" value={searchMonthly}
+                    onChange={e => setSearchMonthly(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchMonthly && <button onClick={() => setSearchMonthly("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
               {loading
                 ? <Loader />
-                : <ExpenseTable expenses={monthly} onUpdate={handleUpdate} onDelete={handleDelete}
-                    onMoveUp={id => handleMove(monthly, id, "up")} onMoveDown={id => handleMove(monthly, id, "down")}
+                : <ExpenseTable expenses={applySearch(monthly, searchMonthly)} onUpdate={handleUpdate} onDelete={handleDelete}
                     headerColor={OBSIDIAN} />}
             </SectionBlock>
 
-            {/* ── Section: Gracefully Redefined ─────────────────────────── */}
+            {/* ── Section: Business Finances ────────────────────────────── */}
             <SectionBlock
               id="section-gr"
-              label="GRACEFULLY REDEFINED"
+              label="BUSINESS FINANCES"
               accent={GR_BEIGE}
               open={openGR}
               onToggle={() => setOpenGR(!openGR)}
@@ -649,9 +650,17 @@ export default function DashboardPage() {
                 { label: "PAID", value: fmt(grPaid), positive: true },
                 { label: "REMAINING", value: fmt(grRem), negative: grRem > 0 },
               ]} />
+              {openGR && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search business finances…" value={searchGR}
+                    onChange={e => setSearchGR(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchGR && <button onClick={() => setSearchGR("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
               {!loading && (
-                <ExpenseTable expenses={grBusiness} onUpdate={handleUpdate} onDelete={handleDelete}
-                  onMoveUp={id => handleMove(grBusiness, id, "up")} onMoveDown={id => handleMove(grBusiness, id, "down")}
+                <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={GR_BEIGE} headerTextColor={OBSIDIAN} />
               )}
             </SectionBlock>
@@ -706,9 +715,17 @@ export default function DashboardPage() {
                 { label: "PAID", value: fmt(aPaid), positive: true },
                 { label: "REMAINING", value: fmt(aRem), negative: aRem > 0 },
               ]} />
+              {openAnnual && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search annual expenses…" value={searchAnnual}
+                    onChange={e => setSearchAnnual(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchAnnual && <button onClick={() => setSearchAnnual("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
               {!loading && (
-                <ExpenseTable expenses={annual} onUpdate={handleUpdate} onDelete={handleDelete}
-                  onMoveUp={id => handleMove(annual, id, "up")} onMoveDown={id => handleMove(annual, id, "down")}
+                <ExpenseTable expenses={applySearch(annual, searchAnnual)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={OBSIDIAN} />
               )}
             </SectionBlock>
@@ -763,9 +780,17 @@ export default function DashboardPage() {
                 { label: "PAID", value: fmt(lPaid), positive: true },
                 { label: "REMAINING", value: fmt(lRem), negative: lRem > 0 },
               ]} />
+              {openLiens && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search obligations…" value={searchLiens}
+                    onChange={e => setSearchLiens(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchLiens && <button onClick={() => setSearchLiens("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
               {!loading && (
-                <ExpenseTable expenses={liens} onUpdate={handleUpdate} onDelete={handleDelete}
-                  onMoveUp={id => handleMove(liens, id, "up")} onMoveDown={id => handleMove(liens, id, "down")}
+                <ExpenseTable expenses={applySearch(liens, searchLiens)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={OBSIDIAN} />
               )}
             </SectionBlock>
@@ -778,7 +803,16 @@ export default function DashboardPage() {
               open={openGroceries}
               onToggle={() => setOpenGroceries(!openGroceries)}
               chevron={chevron}>
-              {!loading && <SpendingTable entries={groceries} accent="#4A7C59" descriptionLabel="Store"
+              {openGroceries && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search groceries…" value={searchGroceries}
+                    onChange={e => setSearchGroceries(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchGroceries && <button onClick={() => setSearchGroceries("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
+              {!loading && <SpendingTable entries={applySearch(groceries, searchGroceries)} accent="#4A7C59" descriptionLabel="Store"
                 monthKey={monthKey} frequency="groceries"
                 onUpdate={handleUpdate} onDelete={handleDelete} onRefresh={fetchExpenses}
                 inlineId={spendInlineId} inlineField={spendInlineField} inlineValue={spendInlineValue}
@@ -794,7 +828,16 @@ export default function DashboardPage() {
               open={openRestaurants}
               onToggle={() => setOpenRestaurants(!openRestaurants)}
               chevron={chevron}>
-              {!loading && <SpendingTable entries={restaurants} accent="#7C4A4A" descriptionLabel="Restaurant"
+              {openRestaurants && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search restaurants…" value={searchRestaurants}
+                    onChange={e => setSearchRestaurants(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchRestaurants && <button onClick={() => setSearchRestaurants("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
+              {!loading && <SpendingTable entries={applySearch(restaurants, searchRestaurants)} accent="#7C4A4A" descriptionLabel="Restaurant"
                 monthKey={monthKey} frequency="restaurants"
                 onUpdate={handleUpdate} onDelete={handleDelete} onRefresh={fetchExpenses}
                 inlineId={spendInlineId} inlineField={spendInlineField} inlineValue={spendInlineValue}
@@ -810,7 +853,16 @@ export default function DashboardPage() {
               open={openIncidental}
               onToggle={() => setOpenIncidental(!openIncidental)}
               chevron={chevron}>
-              {!loading && <SpendingTable entries={incidental} accent="#4A6B7C" descriptionLabel="Description"
+              {openIncidental && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search incidental…" value={searchIncidental}
+                    onChange={e => setSearchIncidental(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchIncidental && <button onClick={() => setSearchIncidental("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
+              {!loading && <SpendingTable entries={applySearch(incidental, searchIncidental)} accent="#4A6B7C" descriptionLabel="Description"
                 monthKey={monthKey} frequency="incidental"
                 onUpdate={handleUpdate} onDelete={handleDelete} onRefresh={fetchExpenses}
                 inlineId={spendInlineId} inlineField={spendInlineField} inlineValue={spendInlineValue}
@@ -826,7 +878,16 @@ export default function DashboardPage() {
               open={openFuel}
               onToggle={() => setOpenFuel(!openFuel)}
               chevron={chevron}>
-              {!loading && <SpendingTable entries={fuel} accent="#8B6320" descriptionLabel="Description"
+              {openFuel && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search fuel…" value={searchFuel}
+                    onChange={e => setSearchFuel(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchFuel && <button onClick={() => setSearchFuel("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
+              {!loading && <SpendingTable entries={applySearch(fuel, searchFuel)} accent="#8B6320" descriptionLabel="Description"
                 monthKey={monthKey} frequency="fuel"
                 onUpdate={handleUpdate} onDelete={handleDelete} onRefresh={fetchExpenses}
                 inlineId={spendInlineId} inlineField={spendInlineField} inlineValue={spendInlineValue}
@@ -993,7 +1054,7 @@ export default function DashboardPage() {
               <div style={{ border: `1px solid ${BORDER}` }}>
                 {[
                   { label: "Expenses",               paid: mPaid,   due: mDue,   accent: OBSIDIAN,  sectionId: "section-expenses",    openFn: () => setOpenMonthly(true) },
-                  { label: "Gracefully Redefined",   paid: grPaid,  due: grDue,  accent: GR_BEIGE,  sectionId: "section-gr",          openFn: () => setOpenGR(true) },
+                  { label: "Business Finances",       paid: grPaid,  due: grDue,  accent: GR_BEIGE,  sectionId: "section-gr",          openFn: () => setOpenGR(true) },
                   { label: "Annual Expenses",        paid: aPaid,   due: aDue,   accent: WARM_GRAY, sectionId: "section-annual",      openFn: () => setOpenAnnual(true) },
                   { label: "Outstanding Obligations",paid: lPaid,   due: lDue,   accent: MUTED_RED, sectionId: "section-liens",       openFn: () => setOpenLiens(true) },
                   { label: "Groceries",              paid: grSpent,   due: grSpent,   accent: "#4A7C59", sectionId: "section-groceries",   openFn: () => setOpenGroceries(true) },
