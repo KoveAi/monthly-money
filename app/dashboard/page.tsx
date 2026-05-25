@@ -62,7 +62,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"overview" | "income" | "paid">("overview");
+  const [activeTab, setActiveTab]         = useState<"overview" | "income" | "paid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -439,13 +439,13 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
-          {(["overview", "income", "paid"] as const).map(tab => (
+          {(["overview", "income", "paid", "overdue"] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className="px-6 py-3.5 text-xs transition-all"
               style={activeTab === tab
-                ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, background: "transparent", letterSpacing: "0.16em", fontWeight: 600 }
-                : { color: "#9E9E9E", borderBottom: "2px solid transparent", background: "transparent", letterSpacing: "0.16em" }}>
-              {tab === "overview" ? "OVERVIEW" : tab === "income" ? "INCOME" : "PAID"}
+                ? { color: tab === "overdue" ? MUTED_RED : OBSIDIAN, borderBottom: `2px solid ${tab === "overdue" ? MUTED_RED : GOLD}`, background: "transparent", letterSpacing: "0.16em", fontWeight: 600 }
+                : { color: tab === "overdue" && pastDueCount > 0 ? MUTED_RED : "#9E9E9E", borderBottom: "2px solid transparent", background: "transparent", letterSpacing: "0.16em" }}>
+              {tab === "overview" ? "OVERVIEW" : tab === "income" ? "INCOME" : tab === "paid" ? "PAID" : `OVERDUE${pastDueCount > 0 ? ` (${pastDueCount})` : ""}`}
             </button>
           ))}
         </div>
@@ -1126,6 +1126,72 @@ export default function DashboardPage() {
                 <span className="text-xl font-light tabular-nums" style={{ color: "#fff" }}>{fmt(mPaid + grPaid + aPaid + lPaid + varSpent)}</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── OVERDUE TAB ───────────────────────────────────────────────── */}
+        {activeTab === "overdue" && (
+          <div className="py-2">
+            <p className="text-xs mb-6" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>OVERDUE OBLIGATIONS — {fmtMonth(monthKey).toUpperCase()}</p>
+
+            {pastDueCount === 0 ? (
+              <p className="text-center py-16 text-xs tracking-widest" style={{ color: "#BDBAB6", letterSpacing: "0.2em" }}>NO OVERDUE ITEMS</p>
+            ) : (
+              [
+                { label: "Expenses",                items: monthly,    accent: OBSIDIAN  },
+                { label: "Business Finances",       items: grBusiness, accent: GR_BEIGE  },
+                { label: "Annual Expenses",         items: annual,     accent: "#8A8078" },
+                { label: "Outstanding Obligations", items: liens,      accent: MUTED_RED },
+              ].map(({ label, items, accent }) => {
+                const overdue = items.filter(e => {
+                  const s = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
+                  return s === "Past Due" || s === "Overdue";
+                });
+                if (overdue.length === 0) return null;
+                const totalRemaining = overdue.reduce((s, e) => s + Math.max(0, e.amount - e.amountPaid), 0);
+                return (
+                  <div key={label} className="mb-6" style={{ border: `1px solid ${BORDER}` }}>
+                    <div className="px-5 py-3 flex items-center gap-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+                      <div className="w-0.5 h-4 shrink-0" style={{ background: accent }} />
+                      <p className="text-xs font-semibold tracking-widest" style={{ color: OBSIDIAN, letterSpacing: "0.16em" }}>{label.toUpperCase()}</p>
+                      <span className="ml-auto text-xs px-2 py-0.5" style={{ background: "#FDF8F8", color: MUTED_RED, border: `1px solid #D4B5B5` }}>
+                        {overdue.length} overdue · {fmt(totalRemaining)} remaining
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr style={{ background: OBSIDIAN }}>
+                            {["Expense", "Due Date", "Amount Due", "Paid", "Remaining"].map((h, i) => (
+                              <th key={i} className="px-4 py-2"
+                                style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600, textAlign: i >= 2 ? "right" : "left", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {overdue.map((e, i) => {
+                            const remaining = Math.max(0, e.amount - e.amountPaid);
+                            return (
+                              <tr key={e.id} style={{ background: i % 2 === 0 ? "#FDF8F8" : SURFACE, borderBottom: `1px solid ${BORDER}` }}>
+                                <td className="px-4 py-3 text-xs" style={{ color: OBSIDIAN, borderRight: `1px solid ${BORDER}` }}>{e.description}</td>
+                                <td className="px-4 py-3 text-xs font-mono" style={{ color: WARM_GRAY, borderRight: `1px solid ${BORDER}` }}>
+                                  {new Date(e.dueDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: "UTC" })}
+                                </td>
+                                <td className="px-4 py-3 text-xs font-mono text-right" style={{ color: OBSIDIAN, borderRight: `1px solid ${BORDER}` }}>{fmt(e.amount)}</td>
+                                <td className="px-4 py-3 text-xs font-mono text-right" style={{ color: e.amountPaid > 0 ? MUTED_GRN : "#C8C4BF", borderRight: `1px solid ${BORDER}` }}>{fmt(e.amountPaid)}</td>
+                                <td className="px-4 py-3 text-xs font-mono text-right" style={{ color: MUTED_RED }}>{fmt(remaining)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>
