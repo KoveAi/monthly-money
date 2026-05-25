@@ -126,6 +126,27 @@ export default function DashboardPage() {
     await fetchExpenses();
   }
 
+  async function handleMoveSection(id: string, targetSection: string) {
+    const expense = expenses.find(e => e.id === id);
+    if (!expense) return;
+    const updates: Partial<Expense> = {};
+    switch (targetSection) {
+      case "expenses":
+        updates.frequency = "monthly";
+        if (expense.category === "GR Business" || expense.category === "Kove Ai-Business") updates.category = "Monthly";
+        break;
+      case "business":    updates.frequency = "monthly"; updates.category = "GR Business"; break;
+      case "annual":      updates.frequency = "annual";  break;
+      case "liens":       updates.frequency = "lien";    break;
+      case "groceries":   updates.frequency = "groceries";   break;
+      case "restaurants": updates.frequency = "restaurants"; break;
+      case "incidental":  updates.frequency = "incidental";  break;
+      case "fuel":        updates.frequency = "fuel";        break;
+      case "income":      updates.frequency = "income";      break;
+    }
+    await handleUpdate(id, updates);
+  }
+
   async function handleGenerate() {
     const next = getNextMonthKey(monthKey);
     if (!confirm(`Generate ${fmtMonth(next)} from recurring expenses?`)) return;
@@ -598,7 +619,7 @@ export default function DashboardPage() {
               {loading
                 ? <Loader />
                 : <ExpenseTable expenses={applySearch(monthly, searchMonthly)} onUpdate={handleUpdate} onDelete={handleDelete}
-                    headerColor={OBSIDIAN} />}
+                    headerColor={OBSIDIAN} onMove={handleMoveSection} />}
             </SectionBlock>
 
             {/* ── Section: Business Finances ────────────────────────────── */}
@@ -671,7 +692,7 @@ export default function DashboardPage() {
               {!loading && (
                 <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={GR_BEIGE} headerTextColor={OBSIDIAN}
-                  categoryOptions={["GR Business", "Kove Ai-Business"]} />
+                  categoryOptions={["GR Business", "Kove Ai-Business"]} onMove={handleMoveSection} />
               )}
             </SectionBlock>
 
@@ -736,7 +757,7 @@ export default function DashboardPage() {
               )}
               {!loading && (
                 <ExpenseTable expenses={applySearch(annual, searchAnnual)} onUpdate={handleUpdate} onDelete={handleDelete}
-                  headerColor={OBSIDIAN} />
+                  headerColor={OBSIDIAN} onMove={handleMoveSection} />
               )}
             </SectionBlock>
 
@@ -801,7 +822,7 @@ export default function DashboardPage() {
               )}
               {!loading && (
                 <ExpenseTable expenses={applySearch(liens, searchLiens)} onUpdate={handleUpdate} onDelete={handleDelete}
-                  headerColor={OBSIDIAN} />
+                  headerColor={OBSIDIAN} onMove={handleMoveSection} />
               )}
             </SectionBlock>
 

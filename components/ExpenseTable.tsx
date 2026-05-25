@@ -32,6 +32,7 @@ interface ExpenseTableProps {
   headerColor?: string;
   headerTextColor?: string;
   categoryOptions?: string[];
+  onMove?: (id: string, targetSection: string) => Promise<void>;
 }
 
 function fmt(v: number) {
@@ -306,7 +307,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate }: {
 }
 
 // ─── Main Table ───────────────────────────────────────────────────────────────
-export function ExpenseTable({ expenses, onUpdate, onDelete, onMoveUp, onMoveDown, headerColor = "#0d2b4e", headerTextColor, categoryOptions }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2b4e", headerTextColor, categoryOptions, onMove }: ExpenseTableProps) {
   const [editingRow, setEditingRow]     = useState<Expense | null>(null);
   const [inlineId, setInlineId]         = useState<string | null>(null);
   const [inlineField, setInlineField]   = useState<string | null>(null);
@@ -565,15 +566,20 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, onMoveUp, onMoveDow
                     {/* Actions */}
                     <td className="px-2 py-2.5 whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        {onMoveUp && (
-                          <button onClick={() => onMoveUp(expense.id)} title="Move up"
-                            className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ color: WARM_GRAY, border: `1px solid ${BORDER}` }}>↑</button>
-                        )}
-                        {onMoveDown && (
-                          <button onClick={() => onMoveDown(expense.id)} title="Move down"
-                            className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ color: WARM_GRAY, border: `1px solid ${BORDER}` }}>↓</button>
+                        {onMove && (
+                          <select value="" onChange={e => { const v = e.target.value; if (v) onMove(expense.id, v); }}
+                            style={{ fontSize: 10, color: WARM_GRAY, border: `1px solid ${BORDER}`, background: IVORY, padding: "2px 3px", letterSpacing: "0.04em" }}>
+                            <option value="">Move…</option>
+                            <option value="expenses">Expenses</option>
+                            <option value="business">Business Finances</option>
+                            <option value="annual">Annual Expenses</option>
+                            <option value="liens">Outstanding Obligations</option>
+                            <option value="groceries">Groceries</option>
+                            <option value="restaurants">Restaurants</option>
+                            <option value="incidental">Incidental</option>
+                            <option value="fuel">Fuel</option>
+                            <option value="income">Income</option>
+                          </select>
                         )}
                         <button onClick={() => setEditingRow(expense)}
                           className="px-2 py-0.5 text-xs tracking-wide"
