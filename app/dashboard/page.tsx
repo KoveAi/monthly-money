@@ -38,6 +38,12 @@ function getNextMonthKey(mk: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function getPrevMonthKey(mk: string) {
+  const [y, m] = mk.split("-").map(Number);
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 function fmtMonth(mk: string) {
   const [y, m] = mk.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -45,7 +51,7 @@ function fmtMonth(mk: string) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [monthKey] = useState(getCurrentMonthKey);
+  const [monthKey, setMonthKey] = useState(getCurrentMonthKey);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading]   = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -113,6 +119,15 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
 
+  useEffect(() => {
+    const d = `${monthKey}-01`;
+    setAddForm(f => ({ ...f, dueDate: d }));
+    setAddIncomeForm(f => ({ ...f, dueDate: d }));
+    setAddGRForm(f => ({ ...f, dueDate: d }));
+    setAddAnnualForm(f => ({ ...f, dueDate: d }));
+    setAddLienForm(f => ({ ...f, dueDate: d }));
+  }, [monthKey]);
+
   async function handleUpdate(id: string, data: Partial<Expense>) {
     await fetch(`/api/expenses/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
@@ -157,7 +172,7 @@ export default function DashboardPage() {
         body: JSON.stringify({ targetMonthKey: next }),
       });
       const data = await res.json();
-      if (res.ok) { setGenMsg(`${data.message}`); router.push(`/monthly/${next}`); }
+      if (res.ok) { setGenMsg(`${data.message}`); setMonthKey(next); }
       else setGenMsg(`${data.error}`);
     } catch { setGenMsg("Network error"); }
     finally { setGenerating(false); }
@@ -375,7 +390,15 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs tracking-widest mb-1" style={{ color: GOLD, letterSpacing: "0.2em" }}>ESTATE MANAGEMENT</p>
-              <h1 className="text-lg font-light text-white tracking-wide">{fmtMonth(monthKey)}</h1>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setMonthKey(getPrevMonthKey(monthKey))}
+                  className="w-6 h-6 flex items-center justify-center text-sm"
+                  style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.15)" }}>←</button>
+                <h1 className="text-lg font-light text-white tracking-wide">{fmtMonth(monthKey)}</h1>
+                <button onClick={() => setMonthKey(getNextMonthKey(monthKey))}
+                  className="w-6 h-6 flex items-center justify-center text-sm"
+                  style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.15)" }}>→</button>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-4">
               {now && (
