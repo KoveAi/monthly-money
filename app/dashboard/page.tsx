@@ -284,13 +284,15 @@ export default function DashboardPage() {
   const sortAlpha   = (arr: Expense[]) => [...arr].sort((a, b) => a.description.localeCompare(b.description));
   const applySearch = (arr: Expense[], q: string) =>
     q.trim() ? arr.filter(e => e.description.toLowerCase().includes(q.toLowerCase())) : arr;
-  const isApple = (e: Expense) => e.description.toLowerCase().includes("apple");
+  const isApple      = (e: Expense) => e.description.toLowerCase().includes("apple");
+  const isBusinessItem = (e: Expense) =>
+    e.category === "GR Business" || e.category === "Kove Ai-Business" || isApple(e);
 
-  const monthly    = sortAlpha(expenses.filter(e => e.frequency === "monthly" && e.category !== "GR Business" && !isApple(e)));
-  const annual     = sortAlpha(expenses.filter(e => e.frequency === "annual"  && e.category !== "GR Business" && !isApple(e)));
-  const liens      = sortAlpha(expenses.filter(e => e.frequency === "lien"    && !isApple(e)));
+  const monthly    = sortAlpha(expenses.filter(e => e.frequency === "monthly" && !isBusinessItem(e)));
+  const annual     = sortAlpha(expenses.filter(e => e.frequency === "annual"  && !isBusinessItem(e)));
+  const liens      = sortAlpha(expenses.filter(e => e.frequency === "lien"    && !isBusinessItem(e)));
   const income     = expenses.filter(e => e.frequency === "income");
-  const grBusiness = sortAlpha(expenses.filter(e => e.category === "GR Business" || e.category === "Kove Ai-Business" || isApple(e)));
+  const grBusiness = sortAlpha(expenses.filter(e => isBusinessItem(e)));
   const groceries   = sortAlpha(expenses.filter(e => e.frequency === "groceries"));
   const restaurants = sortAlpha(expenses.filter(e => e.frequency === "restaurants"));
   const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
