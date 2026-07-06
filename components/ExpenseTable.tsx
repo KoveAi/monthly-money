@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { computeStatus, ALL_STATUSES } from "@/lib/status";
+import { effectivePaid, effectiveRemaining } from "@/lib/finance";
 
 export interface Expense {
   id: string;
@@ -216,7 +217,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate }: {
   onUpdate: (id: string, data: Partial<Expense>) => Promise<void>;
 }) {
   const status    = computeStatus({ status: expense.status, paymentDate: expense.paymentDate, dueDate: expense.dueDate, amountPaid: expense.amountPaid, amount: expense.amount });
-  const remaining = Math.max(0, expense.amount - expense.amountPaid);
+  const remaining = effectiveRemaining(expense);
   const [editPaid, setEditPaid] = useState(false);
   const [paidVal, setPaidVal]   = useState(String(expense.amountPaid));
   const [saving, setSaving]     = useState(false);
@@ -322,8 +323,8 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
   const filtered = filterStatus === "All" ? expenses : expenses.filter(e => getStatus(e) === filterStatus);
 
   const totalAmount    = filtered.reduce((s, e) => s + e.amount, 0);
-  const totalPaid      = filtered.reduce((s, e) => s + e.amountPaid, 0);
-  const totalRemaining = filtered.reduce((s, e) => s + Math.max(0, e.amount - e.amountPaid), 0);
+  const totalPaid      = filtered.reduce((s, e) => s + effectivePaid(e), 0);
+  const totalRemaining = filtered.reduce((s, e) => s + effectiveRemaining(e), 0);
 
   const statusCounts: Record<string, number> = { All: expenses.length };
   expenses.forEach(e => { const s = getStatus(e); statusCounts[s] = (statusCounts[s] ?? 0) + 1; });
@@ -422,7 +423,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
               )}
               {filtered.map((expense) => {
                 const status    = getStatus(expense);
-                const remaining = Math.max(0, expense.amount - expense.amountPaid);
+                const remaining = effectiveRemaining(expense);
                 const isInline  = inlineId === expense.id;
                 const OBSIDIAN = "#111111", GOLD = "#B8976A", BORDER = "#E8E3DC", WARM_GRAY = "#6B6460";
                 const MUTED_GRN = "#2A6B4A", MUTED_RED = "#8B2020", IVORY = "#FAF9F6";
@@ -572,6 +573,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                             <option value="">Move…</option>
                             <option value="expenses">Expenses</option>
                             <option value="business">Business Finances</option>
+                            <option value="marketing">Marketing</option>
                             <option value="annual">Annual Expenses</option>
                             <option value="liens">Outstanding Obligations</option>
                             <option value="groceries">Groceries</option>

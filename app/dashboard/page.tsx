@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { computeStatus } from "@/lib/status";
+import { effectivePaid, effectiveRemaining, isBusinessItem, isMarketingItem } from "@/lib/finance";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const OBSIDIAN   = "#111111";
@@ -15,6 +16,7 @@ const WARM_GRAY  = "#6B6460";
 const MUTED_GRN  = "#2A6B4A";
 const MUTED_RED  = "#8B2020";
 const GR_BEIGE   = "#C4A882";
+const MKT_MAUVE  = "#8B5E7A";
 
 function fmt(v: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
@@ -83,13 +85,17 @@ export default function DashboardPage() {
   const [openAnnual,  setOpenAnnual]  = useState(false);
   const [openLiens,   setOpenLiens]   = useState(false);
   const [openGR,      setOpenGR]      = useState(false);
+  const [openMarketing, setOpenMarketing] = useState(false);
   const [showAddGR,     setShowAddGR]     = useState(false);
+  const [showAddMarketing, setShowAddMarketing] = useState(false);
   const [showAddAnnual, setShowAddAnnual] = useState(false);
   const [showAddLien,   setShowAddLien]   = useState(false);
   const [addGRForm,     setAddGRForm]     = useState({ description: "", amount: "", category: "GR Business", dueDate: `${getCurrentMonthKey()}-01`, isRecurring: false, frequency: "monthly" });
+  const [addMarketingForm, setAddMarketingForm] = useState({ description: "", amount: "", category: "Marketing", dueDate: `${getCurrentMonthKey()}-01`, isRecurring: false, frequency: "monthly" });
   const [addAnnualForm, setAddAnnualForm] = useState({ description: "", amount: "", category: "", dueDate: `${getCurrentMonthKey()}-01`, isRecurring: false, frequency: "annual" });
   const [addLienForm,   setAddLienForm]   = useState({ description: "", amount: "", category: "", dueDate: `${getCurrentMonthKey()}-01`, isRecurring: false, frequency: "lien" });
   const [addGRError,     setAddGRError]     = useState<string | null>(null);
+  const [addMarketingError, setAddMarketingError] = useState<string | null>(null);
   const [addAnnualError, setAddAnnualError] = useState<string | null>(null);
   const [addLienError,   setAddLienError]   = useState<string | null>(null);
   const [openGroceries,    setOpenGroceries]    = useState(false);
@@ -101,6 +107,7 @@ export default function DashboardPage() {
   const [spendInlineValue, setSpendInlineValue] = useState("");
   const [searchMonthly,     setSearchMonthly]     = useState("");
   const [searchGR,          setSearchGR]          = useState("");
+  const [searchMarketing,   setSearchMarketing]   = useState("");
   const [searchAnnual,      setSearchAnnual]       = useState("");
   const [searchLiens,       setSearchLiens]        = useState("");
   const [searchGroceries,   setSearchGroceries]    = useState("");
@@ -124,6 +131,7 @@ export default function DashboardPage() {
     setAddForm(f => ({ ...f, dueDate: d }));
     setAddIncomeForm(f => ({ ...f, dueDate: d }));
     setAddGRForm(f => ({ ...f, dueDate: d }));
+    setAddMarketingForm(f => ({ ...f, dueDate: d }));
     setAddAnnualForm(f => ({ ...f, dueDate: d }));
     setAddLienForm(f => ({ ...f, dueDate: d }));
   }, [monthKey]);
@@ -144,20 +152,38 @@ export default function DashboardPage() {
   async function handleMoveSection(id: string, targetSection: string) {
     const expense = expenses.find(e => e.id === id);
     if (!expense) return;
+    // Business & Marketing buckets are identified by category, so a move OUT of them
+    // must also reset the category — otherwise the section filter pulls the row right
+    // back and the move appears to do nothing.
+    const categoryBound = isBusinessItem(expense) || expense.category === "Marketing";
+    const keepAnnual    = expense.frequency === "annual";
     const updates: Partial<Expense> = {};
     switch (targetSection) {
       case "expenses":
         updates.frequency = "monthly";
-        if (expense.category === "GR Business" || expense.category === "Kove Ai-Business") updates.category = "Monthly";
+        if (categoryBound) updates.category = "Monthly";
         break;
-      case "business":    updates.frequency = "monthly"; updates.category = "GR Business"; break;
-      case "annual":      updates.frequency = "annual";  break;
-      case "liens":       updates.frequency = "lien";    break;
-      case "groceries":   updates.frequency = "groceries";   break;
-      case "restaurants": updates.frequency = "restaurants"; break;
-      case "incidental":  updates.frequency = "incidental";  break;
-      case "fuel":        updates.frequency = "fuel";        break;
-      case "income":      updates.frequency = "income";      break;
+      case "business":
+        updates.frequency = keepAnnual ? "annual" : "monthly";
+        updates.category  = "GR Business";
+        break;
+      case "marketing":
+        updates.frequency = keepAnnual ? "annual" : "monthly";
+        updates.category  = "Marketing";
+        break;
+      case "annual":
+        updates.frequency = "annual";
+        if (categoryBound) updates.category = "Annual";
+        break;
+      case "liens":
+        updates.frequency = "lien";
+        if (categoryBound) updates.category = "Obligation";
+        break;
+      case "groceries":   updates.frequency = "groceries";   updates.category = "Groceries";  break;
+      case "restaurants": updates.frequency = "restaurants"; updates.category = "Dining";     break;
+      case "incidental":  updates.frequency = "incidental";  updates.category = "Incidental"; break;
+      case "fuel":        updates.frequency = "fuel";        updates.category = "Fuel";       break;
+      case "income":      updates.frequency = "income";      updates.category = "Income";     break;
     }
     await handleUpdate(id, updates);
   }
@@ -210,6 +236,22 @@ export default function DashboardPage() {
       setAddGRForm({ description: "", amount: "", category: "GR Business", dueDate: `${monthKey}-01`, isRecurring: false, frequency: "monthly" });
       fetchExpenses();
     } else { const d = await res.json(); setAddGRError(d.error || "Failed."); }
+  }
+
+  async function handleAddMarketing(e: React.FormEvent) {
+    e.preventDefault(); setAddMarketingError(null);
+    if (!addMarketingForm.description || !addMarketingForm.amount || !addMarketingForm.dueDate) {
+      setAddMarketingError("All fields required."); return;
+    }
+    const res = await fetch("/api/expenses", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...addMarketingForm, category: "Marketing", amount: parseFloat(addMarketingForm.amount), monthKey }),
+    });
+    if (res.ok) {
+      setShowAddMarketing(false);
+      setAddMarketingForm({ description: "", amount: "", category: "Marketing", dueDate: `${monthKey}-01`, isRecurring: false, frequency: "monthly" });
+      fetchExpenses();
+    } else { const d = await res.json(); setAddMarketingError(d.error || "Failed."); }
   }
 
   async function handleAddAnnual(e: React.FormEvent) {
@@ -284,31 +326,18 @@ export default function DashboardPage() {
   const sortAlpha   = (arr: Expense[]) => [...arr].sort((a, b) => a.description.localeCompare(b.description));
   const applySearch = (arr: Expense[], q: string) =>
     q.trim() ? arr.filter(e => e.description.toLowerCase().includes(q.toLowerCase())) : arr;
-  const isApple      = (e: Expense) => e.description.toLowerCase().includes("apple");
-  const isBusinessItem = (e: Expense) =>
-    e.category === "GR Business" || e.category === "Kove Ai-Business" || isApple(e);
-
-  const monthly    = sortAlpha(expenses.filter(e => e.frequency === "monthly" && !isBusinessItem(e)));
-  const annual     = sortAlpha(expenses.filter(e => e.frequency === "annual"  && !isBusinessItem(e)));
-  const liens      = sortAlpha(expenses.filter(e => e.frequency === "lien"    && !isBusinessItem(e)));
+  const monthly    = sortAlpha(expenses.filter(e => e.frequency === "monthly" && !isBusinessItem(e) && !isMarketingItem(e)));
+  const annual     = sortAlpha(expenses.filter(e => e.frequency === "annual"  && !isBusinessItem(e) && !isMarketingItem(e)));
+  const liens      = sortAlpha(expenses.filter(e => e.frequency === "lien"    && !isBusinessItem(e) && !isMarketingItem(e)));
   const income     = expenses.filter(e => e.frequency === "income");
-  const grBusiness = sortAlpha(expenses.filter(e => isBusinessItem(e)));
+  const grBusiness = sortAlpha(expenses.filter(e => isBusinessItem(e) && !isMarketingItem(e)));
+  const marketing  = sortAlpha(expenses.filter(e => isMarketingItem(e)));
   const groceries   = sortAlpha(expenses.filter(e => e.frequency === "groceries"));
   const restaurants = sortAlpha(expenses.filter(e => e.frequency === "restaurants"));
   const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
   const fuel        = sortAlpha(expenses.filter(e => e.frequency === "fuel"));
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  function effectivePaid(e: Expense) {
-    if (e.amountPaid > 0) return e.amountPaid;
-    if (e.paymentDate) return e.amount;
-    const st = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
-    return (st === "Paid" || st === "Paid as Agreed") ? e.amount : 0;
-  }
-  function effectiveRemaining(e: Expense) {
-    return Math.max(0, e.amount - effectivePaid(e));
-  }
-
   const mDue  = monthly.reduce((s, e) => s + e.amount, 0);
   const mPaid = monthly.reduce((s, e) => s + effectivePaid(e), 0);
   const mRem  = monthly.reduce((s, e) => s + effectiveRemaining(e), 0);
@@ -321,6 +350,9 @@ export default function DashboardPage() {
   const grDue  = grBusiness.reduce((s, e) => s + e.amount, 0);
   const grPaid = grBusiness.reduce((s, e) => s + effectivePaid(e), 0);
   const grRem  = grBusiness.reduce((s, e) => s + effectiveRemaining(e), 0);
+  const mktDue  = marketing.reduce((s, e) => s + e.amount, 0);
+  const mktPaid = marketing.reduce((s, e) => s + effectivePaid(e), 0);
+  const mktRem  = marketing.reduce((s, e) => s + effectiveRemaining(e), 0);
   const iExp  = income.reduce((s, e) => s + e.amount, 0);
   const iRec  = income.reduce((s, e) => s + effectivePaid(e), 0);
 
@@ -330,13 +362,13 @@ export default function DashboardPage() {
   const fuelSpent = fuel.reduce((s, e) => s + e.amount, 0);
   const varSpent  = grSpent + resSpent + incSpent + fuelSpent;
 
-  const totalRem    = mRem + aRem + lRem + grRem;
-  const totalDue    = mDue + aDue + lDue + grDue;
-  const totalPaidAll = mPaid + aPaid + lPaid + grPaid;
+  const totalRem    = mRem + aRem + lRem + grRem + mktRem;
+  const totalDue    = mDue + aDue + lDue + grDue + mktDue;
+  const totalPaidAll = mPaid + aPaid + lPaid + grPaid + mktPaid;
   const netBalance  = iRec - totalPaidAll - varSpent;
 
   // Only bill-type entries have meaningful statuses
-  const billExpenses = expenses.filter(e => ["monthly", "annual", "lien"].includes(e.frequency) || e.category === "GR Business");
+  const billExpenses = expenses.filter(e => ["monthly", "annual", "lien"].includes(e.frequency) || isBusinessItem(e) || isMarketingItem(e));
   const pastDueCount = billExpenses.filter(e => {
     const s = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
     return s === "Past Due" || s === "Overdue";
@@ -346,7 +378,7 @@ export default function DashboardPage() {
     return s === "Paid";
   }).length;
 
-  const progressPct = (mDue + grDue) > 0 ? ((mPaid + grPaid) / (mDue + grDue)) * 100 : 0;
+  const progressPct = (mDue + grDue + mktDue) > 0 ? ((mPaid + grPaid + mktPaid) / (mDue + grDue + mktDue)) * 100 : 0;
 
   // ── AI Insights ────────────────────────────────────────────────────────────
   const insights: { text: string; tone: "warning" | "positive" | "neutral" }[] = [];
@@ -361,6 +393,8 @@ export default function DashboardPage() {
     insights.push({ text: `Received income covers ${Math.min(coveragePct, 999)}% of current outstanding obligations.`, tone: coveragePct >= 100 ? "positive" : "neutral" });
   if (grPortfolioPct > 0)
     insights.push({ text: `Business Finances comprises ${grPortfolioPct}% of total portfolio obligations — ${fmt(grRem)} remaining.`, tone: "neutral" });
+  if (mktDue > 0)
+    insights.push({ text: `Marketing & content tools: ${fmt(mktDue)} across ${marketing.length} subscription${marketing.length !== 1 ? "s" : ""} — ${fmt(mktRem)} remaining.`, tone: "neutral" });
   if (varSpent > 0)
     insights.push({ text: `Variable spending: ${fmt(grSpent)} groceries · ${fmt(resSpent)} dining · ${fmt(incSpent)} incidental · ${fmt(fuelSpent)} fuel = ${fmt(varSpent)} total deducted from income.`, tone: varSpent > iRec * 0.3 ? "warning" : "neutral" });
   if (netBalance >= 0)
@@ -436,7 +470,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex justify-between mt-2">
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em" }}>
-                {fmt(mPaid + grPaid)} PAID OF {fmt(mDue + grDue)} MONTHLY
+                {fmt(mPaid + grPaid + mktPaid)} PAID OF {fmt(mDue + grDue + mktDue)} MONTHLY
               </p>
               <p className="text-xs" style={{ color: GOLD, letterSpacing: "0.08em" }}>{Math.round(progressPct)}%</p>
             </div>
@@ -449,15 +483,15 @@ export default function DashboardPage() {
         <div className="max-w-screen-2xl mx-auto px-8 py-2.5 flex items-center gap-8">
           <span style={{ color: GOLD, letterSpacing: "0.18em", fontSize: 10 }}>MONTHLY</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-            Due <strong style={{ color: "#fff", fontWeight: 400 }}>{fmt(mDue + grDue)}</strong>
+            Due <strong style={{ color: "#fff", fontWeight: 400 }}>{fmt(mDue + grDue + mktDue)}</strong>
           </span>
           <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-            Paid <strong style={{ color: GOLD, fontWeight: 500 }}>{fmt(mPaid + grPaid)}</strong>
+            Paid <strong style={{ color: GOLD, fontWeight: 500 }}>{fmt(mPaid + grPaid + mktPaid)}</strong>
           </span>
           <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-            Remaining <strong style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400 }}>{fmt(mRem + grRem)}</strong>
+            Remaining <strong style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400 }}>{fmt(mRem + grRem + mktRem)}</strong>
           </span>
         </div>
       </div>
@@ -492,7 +526,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {[
                 { label: "Monthly Due",  value: fmt(mDue),           sub: `${monthly.length} items`,  accent: OBSIDIAN },
-                { label: "Total Paid",   value: fmt(mPaid + grPaid + aPaid), sub: `${paidCount} fulfilled`,   accent: MUTED_GRN },
+                { label: "Total Paid",   value: fmt(mPaid + grPaid + mktPaid + aPaid + lPaid), sub: `${paidCount} fulfilled`,   accent: MUTED_GRN },
                 { label: "Remaining",    value: fmt(mRem),           sub: `of ${fmt(mDue)}`,          accent: WARM_GRAY },
                 { label: "Past Due",     value: String(pastDueCount),sub: "require attention",        accent: pastDueCount > 0 ? MUTED_RED : WARM_GRAY },
               ].map(c => (
@@ -719,6 +753,71 @@ export default function DashboardPage() {
                 <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={GR_BEIGE} headerTextColor={OBSIDIAN}
                   categoryOptions={["GR Business", "Kove Ai-Business"]} onMove={handleMoveSection} />
+              )}
+            </SectionBlock>
+
+            {/* ── Section: Marketing ────────────────────────────────────── */}
+            <SectionBlock
+              id="section-marketing"
+              label="MARKETING"
+              accent={MKT_MAUVE}
+              open={openMarketing}
+              onToggle={() => setOpenMarketing(!openMarketing)}
+              chevron={chevron}
+              sub="Content, social & advertising tools"
+              action={openMarketing ? (
+                <button onClick={() => setShowAddMarketing(!showAddMarketing)}
+                  className="text-xs tracking-widest px-4 py-2 transition-all"
+                  style={{ background: showAddMarketing ? IVORY : OBSIDIAN, color: showAddMarketing ? MUTED_RED : "#fff", border: `1px solid ${showAddMarketing ? BORDER : OBSIDIAN}`, letterSpacing: "0.12em" }}>
+                  {showAddMarketing ? "CANCEL" : "+ ADD"}
+                </button>
+              ) : null}>
+              {showAddMarketing && (
+                <form onSubmit={handleAddMarketing}
+                  className="mb-6 p-6 grid grid-cols-2 md:grid-cols-3 gap-4"
+                  style={{ background: IVORY, border: `1px solid ${BORDER}` }}>
+                  {[
+                    { label: "Description", key: "description", type: "text",   placeholder: "e.g. Meta Verified" },
+                    { label: "Amount",       key: "amount",      type: "number", placeholder: "0.00" },
+                    { label: "Due Date",     key: "dueDate",     type: "date",   placeholder: "" },
+                  ].map(f => (
+                    <div key={f.key}>
+                      <label className="block text-xs mb-1.5" style={{ color: WARM_GRAY, letterSpacing: "0.12em" }}>{f.label.toUpperCase()}</label>
+                      <input type={f.type} value={(addMarketingForm as any)[f.key]} placeholder={f.placeholder}
+                        onChange={e => setAddMarketingForm({ ...addMarketingForm, [f.key]: e.target.value })}
+                        className={inp} style={inpStyle} />
+                    </div>
+                  ))}
+                  <div className="flex items-end">
+                    <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: WARM_GRAY, letterSpacing: "0.08em" }}>
+                      <input type="checkbox" checked={addMarketingForm.isRecurring}
+                        onChange={e => setAddMarketingForm({ ...addMarketingForm, isRecurring: e.target.checked })} className="w-3.5 h-3.5" /> RECURRING
+                    </label>
+                  </div>
+                  <div className="col-span-2 md:col-span-3 flex items-center gap-4">
+                    {addMarketingError && <p className="text-xs" style={{ color: MUTED_RED }}>{addMarketingError}</p>}
+                    <button type="submit" className="px-6 py-2.5 text-xs tracking-widest"
+                      style={{ background: OBSIDIAN, color: "#fff", letterSpacing: "0.14em" }}>ADD ENTRY</button>
+                  </div>
+                </form>
+              )}
+              <MiniStats items={[
+                { label: "DUE", value: fmt(mktDue) },
+                { label: "PAID", value: fmt(mktPaid), positive: true },
+                { label: "REMAINING", value: fmt(mktRem), negative: mktRem > 0 },
+              ]} />
+              {openMarketing && (
+                <div className="mb-3 flex items-center gap-2">
+                  <input type="text" placeholder="Search marketing…" value={searchMarketing}
+                    onChange={e => setSearchMarketing(e.target.value)}
+                    className="px-3 py-2 text-xs focus:outline-none"
+                    style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN, width: 280, letterSpacing: "0.04em" }} />
+                  {searchMarketing && <button onClick={() => setSearchMarketing("")} style={{ color: WARM_GRAY, fontSize: 11 }}>✕</button>}
+                </div>
+              )}
+              {!loading && (
+                <ExpenseTable expenses={applySearch(marketing, searchMarketing)} onUpdate={handleUpdate} onDelete={handleDelete}
+                  headerColor={MKT_MAUVE} onMove={handleMoveSection} />
               )}
             </SectionBlock>
 
@@ -1112,6 +1211,7 @@ export default function DashboardPage() {
                 {[
                   { label: "Expenses",               paid: mPaid,   due: mDue,   accent: OBSIDIAN,  sectionId: "section-expenses",    openFn: () => setOpenMonthly(true) },
                   { label: "Business Finances",       paid: grPaid,  due: grDue,  accent: GR_BEIGE,  sectionId: "section-gr",          openFn: () => setOpenGR(true) },
+                  { label: "Marketing",               paid: mktPaid, due: mktDue, accent: MKT_MAUVE, sectionId: "section-marketing",   openFn: () => setOpenMarketing(true) },
                   { label: "Annual Expenses",        paid: aPaid,   due: aDue,   accent: WARM_GRAY, sectionId: "section-annual",      openFn: () => setOpenAnnual(true) },
                   { label: "Outstanding Obligations",paid: lPaid,   due: lDue,   accent: MUTED_RED, sectionId: "section-liens",       openFn: () => setOpenLiens(true) },
                   { label: "Groceries",              paid: grSpent,   due: grSpent,   accent: "#4A7C59", sectionId: "section-groceries",   openFn: () => setOpenGroceries(true) },
@@ -1149,7 +1249,7 @@ export default function DashboardPage() {
               </div>
               <div className="mt-6 px-6 py-4 flex items-center justify-between" style={{ background: OBSIDIAN }}>
                 <span className="text-xs tracking-widest" style={{ color: GOLD, letterSpacing: "0.2em" }}>TOTAL PAID</span>
-                <span className="text-xl font-light tabular-nums" style={{ color: "#fff" }}>{fmt(mPaid + grPaid + aPaid + lPaid + varSpent)}</span>
+                <span className="text-xl font-light tabular-nums" style={{ color: "#fff" }}>{fmt(mPaid + grPaid + mktPaid + aPaid + lPaid + varSpent)}</span>
               </div>
             </div>
           </div>
@@ -1166,6 +1266,7 @@ export default function DashboardPage() {
               [
                 { label: "Expenses",                items: monthly,    accent: OBSIDIAN  },
                 { label: "Business Finances",       items: grBusiness, accent: GR_BEIGE  },
+                { label: "Marketing",               items: marketing,  accent: MKT_MAUVE },
                 { label: "Annual Expenses",         items: annual,     accent: "#8A8078" },
                 { label: "Outstanding Obligations", items: liens,      accent: MUTED_RED },
               ].map(({ label, items, accent }) => {
