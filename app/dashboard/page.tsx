@@ -1311,6 +1311,7 @@ function SpendingTable({ entries, accent, descriptionLabel = "Description", mont
   const OBSIDIAN = "#111111", BORDER = "#E8E3DC", WARM_GRAY = "#6B6460", IVORY = "#FAF9F6", MUTED_RED = "#8B2020";
   const fmt = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
   const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: "UTC" });
+  const total = entries.reduce((s, e) => s + e.amount, 0);
 
   const [addDesc,  setAddDesc]  = useState("");
   const [addDate,  setAddDate]  = useState(`${monthKey}-01`);
@@ -1430,6 +1431,18 @@ function SpendingTable({ entries, accent, descriptionLabel = "Description", mont
               );
             })}
           </tbody>
+          {entries.length > 0 && (
+            <tfoot>
+              <tr style={{ background: OBSIDIAN }}>
+                <td className="px-3 py-3 text-xs uppercase" colSpan={2}
+                  style={{ color: "rgba(255,255,255,0.55)", borderRight: "1px solid rgba(255,255,255,0.07)", letterSpacing: "0.16em" }}>
+                  Total · {entries.length} {entries.length === 1 ? "entry" : "entries"}
+                </td>
+                <td className="px-3 py-3 text-right font-mono font-bold" style={{ color: "#fff" }}>{fmt(total)}</td>
+                <td colSpan={2} />
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
@@ -1464,6 +1477,14 @@ function SpendingTable({ entries, accent, descriptionLabel = "Description", mont
             </div>
           </div>
         ))}
+        {entries.length > 0 && (
+          <div className="flex items-center justify-between gap-3 py-2 mt-1" style={{ borderTop: `2px solid ${accent}` }}>
+            <span className="text-xs uppercase" style={{ color: WARM_GRAY, letterSpacing: "0.14em" }}>
+              Total · {entries.length} {entries.length === 1 ? "entry" : "entries"}
+            </span>
+            <span className="font-mono text-sm font-bold" style={{ color: accent }}>{fmt(total)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
