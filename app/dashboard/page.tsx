@@ -17,6 +17,7 @@ const MUTED_GRN  = "#2A6B4A";
 const MUTED_RED  = "#8B2020";
 const GR_BEIGE   = "#C4A882";
 const MKT_MAUVE  = "#8B5E7A";
+const AMBER      = "#8B5E2A";
 
 function fmt(v: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
@@ -70,7 +71,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"overview" | "income" | "paid" | "overdue">("overview");
+  const [activeTab, setActiveTab]         = useState<"overview" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -344,6 +345,8 @@ export default function DashboardPage() {
     const s = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
     return s === "Paid";
   }).length;
+  // "Unpaid" = anything with a balance still owed (not updated to paid, manually or auto).
+  const unpaidCount = billExpenses.filter(e => effectiveRemaining(e) > 0).length;
 
   const progressPct = (mDue + grDue + mktDue) > 0 ? ((mPaid + grPaid + mktPaid) / (mDue + grDue + mktDue)) * 100 : 0;
 
@@ -384,6 +387,48 @@ export default function DashboardPage() {
 
   const inpStyle = { background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN };
   const inp = "w-full px-3 py-2.5 text-sm rounded-sm focus:outline-none";
+
+  // ── Attention tabs (Unpaid / Overdue) — fully editable via ExpenseTable ─────
+  const isOverdueRow = (e: Expense) => {
+    const s = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
+    return s === "Past Due" || s === "Overdue";
+  };
+  const isUnpaidRow = (e: Expense) => effectiveRemaining(e) > 0;
+
+  const attentionSections: { label: string; items: Expense[]; color: string; text?: string }[] = [
+    { label: "Expenses",                items: monthly,    color: OBSIDIAN },
+    { label: "Business Finances",       items: grBusiness, color: GR_BEIGE, text: OBSIDIAN },
+    { label: "Marketing",               items: marketing,  color: MKT_MAUVE },
+    { label: "Annual Expenses",         items: annual,     color: "#8A8078" },
+    { label: "Outstanding Obligations", items: liens,      color: MUTED_RED },
+  ];
+
+  function renderAttention(pred: (e: Expense) => boolean, emptyMsg: string) {
+    const groups = attentionSections
+      .map(s => ({ ...s, rows: s.items.filter(pred) }))
+      .filter(g => g.rows.length > 0);
+    if (groups.length === 0)
+      return <p className="text-center py-16 text-xs tracking-widest" style={{ color: "#BDBAB6", letterSpacing: "0.2em" }}>{emptyMsg}</p>;
+    return groups.map(g => {
+      const rem = g.rows.reduce((s, e) => s + effectiveRemaining(e), 0);
+      return (
+        <div key={g.label} className="mb-8" style={{ border: `1px solid ${BORDER}` }}>
+          <div className="px-5 py-3 flex items-center gap-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+            <div className="w-0.5 h-4 shrink-0" style={{ background: g.color }} />
+            <p className="text-xs font-semibold tracking-widest" style={{ color: OBSIDIAN, letterSpacing: "0.16em" }}>{g.label.toUpperCase()}</p>
+            <span className="ml-auto text-xs px-2 py-0.5" style={{ background: "#FDF8F8", color: MUTED_RED, border: `1px solid #D4B5B5` }}>
+              {g.rows.length} · {fmt(rem)} remaining
+            </span>
+          </div>
+          <div className="p-4">
+            <ExpenseTable expenses={g.rows} onUpdate={handleUpdate} onDelete={handleDelete}
+              headerColor={g.color} headerTextColor={g.text} onMove={handleMoveSection}
+              categoryOptions={g.label === "Business Finances" ? ["GR Business", "Kove Ai-Business", "Business Finance"] : undefined} />
+          </div>
+        </div>
+      );
+    });
+  }
 
   return (
     <div style={{ background: IVORY, minHeight: "100vh", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
@@ -466,15 +511,25 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
-          {(["overview", "income", "paid", "overdue"] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-6 py-3.5 text-xs transition-all"
-              style={activeTab === tab
-                ? { color: tab === "overdue" ? MUTED_RED : OBSIDIAN, borderBottom: `2px solid ${tab === "overdue" ? MUTED_RED : GOLD}`, background: "transparent", letterSpacing: "0.16em", fontWeight: 600 }
-                : { color: tab === "overdue" && pastDueCount > 0 ? MUTED_RED : "#9E9E9E", borderBottom: "2px solid transparent", background: "transparent", letterSpacing: "0.16em" }}>
-              {tab === "overview" ? "OVERVIEW" : tab === "income" ? "INCOME" : tab === "paid" ? "PAID" : `OVERDUE${pastDueCount > 0 ? ` (${pastDueCount})` : ""}`}
-            </button>
-          ))}
+          {(["overview", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
+            const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
+            const attn   = tab === "overdue" || tab === "unpaid";
+            const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
+            const label  = tab === "overview" ? "OVERVIEW"
+                         : tab === "income"   ? "INCOME"
+                         : tab === "paid"     ? "PAID"
+                         : tab === "unpaid"   ? `UNPAID${unpaidCount > 0 ? ` (${unpaidCount})` : ""}`
+                         :                      `OVERDUE${pastDueCount > 0 ? ` (${pastDueCount})` : ""}`;
+            return (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className="px-6 py-3.5 text-xs transition-all"
+                style={activeTab === tab
+                  ? { color: attn ? accent : OBSIDIAN, borderBottom: `2px solid ${accent}`, background: "transparent", letterSpacing: "0.16em", fontWeight: 600 }
+                  : { color: attn && count > 0 ? accent : "#9E9E9E", borderBottom: "2px solid transparent", background: "transparent", letterSpacing: "0.16em" }}>
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -1222,70 +1277,19 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* ── UNPAID TAB ────────────────────────────────────────────────── */}
+        {activeTab === "unpaid" && (
+          <div className="py-2">
+            <p className="text-xs mb-6" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>UNPAID — OUTSTANDING BALANCES · {fmtMonth(monthKey).toUpperCase()}</p>
+            {renderAttention(isUnpaidRow, "NOTHING UNPAID — ALL SETTLED")}
+          </div>
+        )}
+
         {/* ── OVERDUE TAB ───────────────────────────────────────────────── */}
         {activeTab === "overdue" && (
           <div className="py-2">
             <p className="text-xs mb-6" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>OVERDUE OBLIGATIONS — {fmtMonth(monthKey).toUpperCase()}</p>
-
-            {pastDueCount === 0 ? (
-              <p className="text-center py-16 text-xs tracking-widest" style={{ color: "#BDBAB6", letterSpacing: "0.2em" }}>NO OVERDUE ITEMS</p>
-            ) : (
-              [
-                { label: "Expenses",                items: monthly,    accent: OBSIDIAN  },
-                { label: "Business Finances",       items: grBusiness, accent: GR_BEIGE  },
-                { label: "Marketing",               items: marketing,  accent: MKT_MAUVE },
-                { label: "Annual Expenses",         items: annual,     accent: "#8A8078" },
-                { label: "Outstanding Obligations", items: liens,      accent: MUTED_RED },
-              ].map(({ label, items, accent }) => {
-                const overdue = items.filter(e => {
-                  const s = computeStatus({ status: e.status, paymentDate: e.paymentDate, dueDate: e.dueDate, amountPaid: e.amountPaid, amount: e.amount });
-                  return s === "Past Due" || s === "Overdue";
-                });
-                if (overdue.length === 0) return null;
-                const totalRemaining = overdue.reduce((s, e) => s + Math.max(0, e.amount - e.amountPaid), 0);
-                return (
-                  <div key={label} className="mb-6" style={{ border: `1px solid ${BORDER}` }}>
-                    <div className="px-5 py-3 flex items-center gap-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
-                      <div className="w-0.5 h-4 shrink-0" style={{ background: accent }} />
-                      <p className="text-xs font-semibold tracking-widest" style={{ color: OBSIDIAN, letterSpacing: "0.16em" }}>{label.toUpperCase()}</p>
-                      <span className="ml-auto text-xs px-2 py-0.5" style={{ background: "#FDF8F8", color: MUTED_RED, border: `1px solid #D4B5B5` }}>
-                        {overdue.length} overdue · {fmt(totalRemaining)} remaining
-                      </span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm border-collapse">
-                        <thead>
-                          <tr style={{ background: OBSIDIAN }}>
-                            {["Expense", "Due Date", "Amount Due", "Paid", "Remaining"].map((h, i) => (
-                              <th key={i} className="px-4 py-2"
-                                style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600, textAlign: i >= 2 ? "right" : "left", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-                                {h}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {overdue.map((e, i) => {
-                            const remaining = Math.max(0, e.amount - e.amountPaid);
-                            return (
-                              <tr key={e.id} style={{ background: i % 2 === 0 ? "#FDF8F8" : SURFACE, borderBottom: `1px solid ${BORDER}` }}>
-                                <td className="px-4 py-3 text-xs" style={{ color: OBSIDIAN, borderRight: `1px solid ${BORDER}` }}>{e.description}</td>
-                                <td className="px-4 py-3 text-xs font-mono" style={{ color: WARM_GRAY, borderRight: `1px solid ${BORDER}` }}>
-                                  {new Date(e.dueDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: "UTC" })}
-                                </td>
-                                <td className="px-4 py-3 text-xs font-mono text-right" style={{ color: OBSIDIAN, borderRight: `1px solid ${BORDER}` }}>{fmt(e.amount)}</td>
-                                <td className="px-4 py-3 text-xs font-mono text-right" style={{ color: e.amountPaid > 0 ? MUTED_GRN : "#C8C4BF", borderRight: `1px solid ${BORDER}` }}>{fmt(e.amountPaid)}</td>
-                                <td className="px-4 py-3 text-xs font-mono text-right" style={{ color: MUTED_RED }}>{fmt(remaining)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+            {renderAttention(isOverdueRow, "NO OVERDUE ITEMS")}
           </div>
         )}
       </div>
