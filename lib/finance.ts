@@ -46,8 +46,14 @@ export interface Classifiable {
 export const isApple = (e: Classifiable) =>
   e.description.toLowerCase().includes("apple");
 
+// Category assigned by an explicit "move to Business Finances". It pins the entry
+// to Business so the marketing name-heuristic below can't reclaim it (e.g. "Repost"
+// reads as a marketing tool by name, but a deliberate move must win).
+export const BUSINESS_PINNED = "Business Finance";
+
 export const isBusinessItem = (e: Classifiable) =>
-  e.category === "GR Business" || e.category === "Kove Ai-Business" || isApple(e);
+  e.category === "GR Business" || e.category === "Kove Ai-Business" ||
+  e.category === BUSINESS_PINNED || isApple(e);
 
 /**
  * Marketing is a carve-out of Business Finances: an explicit "Marketing" category,
@@ -67,7 +73,8 @@ export const looksLikeMarketing = (e: Classifiable) => {
 };
 
 export const isMarketingItem = (e: Classifiable) =>
-  e.category === "Marketing" || (isBusinessItem(e) && looksLikeMarketing(e));
+  e.category === "Marketing" ||
+  (e.category !== BUSINESS_PINNED && isBusinessItem(e) && looksLikeMarketing(e));
 
 export type LedgerSection =
   | "income" | "expenses" | "business" | "marketing"
@@ -121,7 +128,7 @@ export function movePatch(e: Classifiable, target: MoveTarget): { frequency: str
   const keepAnnual = e.frequency === "annual";
   switch (target) {
     case "expenses":    return categoryBound ? { frequency: "monthly", category: "Monthly" } : { frequency: "monthly" };
-    case "business":    return { frequency: keepAnnual ? "annual" : "monthly", category: "GR Business" };
+    case "business":    return { frequency: keepAnnual ? "annual" : "monthly", category: BUSINESS_PINNED };
     case "marketing":   return { frequency: keepAnnual ? "annual" : "monthly", category: "Marketing" };
     case "annual":      return categoryBound ? { frequency: "annual", category: "Annual" } : { frequency: "annual" };
     case "liens":       return categoryBound ? { frequency: "lien", category: "Obligation" } : { frequency: "lien" };
