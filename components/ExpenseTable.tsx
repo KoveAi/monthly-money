@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { computeStatus, ALL_STATUSES } from "@/lib/status";
-import { effectivePaid, effectiveRemaining } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
 
 export interface Expense {
   id: string;
@@ -175,17 +175,18 @@ function EditModal({ expense, onSave, onClose }: {
             </label>
             <div className="flex items-center gap-2 text-xs" style={{ color: WARM_GRAY }}>
               <span style={{ letterSpacing: "0.1em" }}>SECTION</span>
-              <select value={form.frequency} className="text-xs px-2 py-1.5 focus:outline-none"
+              <select
+                value={sectionOf({ description: form.description, category: form.category, frequency: form.frequency })}
+                className="text-xs px-2 py-1.5 focus:outline-none"
                 style={{ background: IVORY, border: `1px solid ${BORDER}`, color: OBSIDIAN }}
-                onChange={e => setForm({ ...form, frequency: e.target.value })}>
-                <option value="monthly">Monthly</option>
-                <option value="annual">Annual</option>
-                <option value="lien">Outstanding Obligations</option>
-                <option value="income">Income</option>
-                <option value="groceries">Groceries</option>
-                <option value="restaurants">Restaurants</option>
-                <option value="incidental">Incidental</option>
-                <option value="fuel">Fuel</option>
+                onChange={e => {
+                  const patch = movePatch(
+                    { description: form.description, category: form.category, frequency: form.frequency },
+                    e.target.value as MoveTarget,
+                  );
+                  setForm(f => ({ ...f, frequency: patch.frequency, ...(patch.category !== undefined ? { category: patch.category } : {}) }));
+                }}>
+                {MOVE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
           </div>
@@ -210,11 +211,12 @@ function EditModal({ expense, onSave, onClose }: {
 }
 
 // ─── Mobile Card ──────────────────────────────────────────────────────────────
-function MobileCard({ expense, onEdit, onDelete, onUpdate }: {
+function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
   expense: Expense;
   onEdit: () => void;
   onDelete?: () => void;
   onUpdate: (id: string, data: Partial<Expense>) => Promise<void>;
+  onMove?: (id: string, targetSection: string) => Promise<void>;
 }) {
   const status    = computeStatus({ status: expense.status, paymentDate: expense.paymentDate, dueDate: expense.dueDate, amountPaid: expense.amountPaid, amount: expense.amount });
   const remaining = effectiveRemaining(expense);
@@ -280,29 +282,28 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate }: {
       </div>
 
       {/* Notes + actions */}
-      {(expense.notes || onDelete) && (
-        <div className="px-4 py-2.5 flex items-center justify-between gap-2"
-          style={{ borderTop: "1px solid #f1f5f9", background: "#fafafa" }}>
-          <p className="text-xs text-slate-400 truncate flex-1">{expense.notes || ""}</p>
-          <div className="flex gap-2 shrink-0">
-            <button onClick={onEdit}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg"
-              style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>Edit</button>
-            {onDelete && (
-              <button onClick={onDelete}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg"
-                style={{ background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" }}>Del</button>
-            )}
-          </div>
-        </div>
-      )}
-      {!expense.notes && !onDelete && (
-        <div className="px-4 py-2 flex justify-end" style={{ borderTop: "1px solid #f1f5f9", background: "#fafafa" }}>
+      <div className="px-4 py-2.5 flex items-center justify-between gap-2"
+        style={{ borderTop: "1px solid #f1f5f9", background: "#fafafa" }}>
+        <p className="text-xs text-slate-400 truncate flex-1">{expense.notes || ""}</p>
+        <div className="flex items-center gap-2 shrink-0">
+          {onMove && (
+            <select value="" onChange={e => { const v = e.target.value; if (v) onMove(expense.id, v); }}
+              className="text-xs rounded-lg px-2 py-1.5"
+              style={{ background: "#f8fafc", color: "#475569", border: "1px solid #e2e8f0" }}>
+              <option value="">Move…</option>
+              {MOVE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          )}
           <button onClick={onEdit}
             className="px-3 py-1.5 text-xs font-semibold rounded-lg"
             style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>Edit</button>
+          {onDelete && (
+            <button onClick={onDelete}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg"
+              style={{ background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" }}>Del</button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -391,7 +392,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
             <MobileCard key={expense.id} expense={expense}
               onEdit={() => setEditingRow(expense)}
               onDelete={onDelete ? () => onDelete(expense.id) : undefined}
-              onUpdate={onUpdate} />
+              onUpdate={onUpdate} onMove={onMove} />
           ))}
           {filtered.length > 0 && (
             <div className="p-4 mt-2" style={{ background: headerColor }}>

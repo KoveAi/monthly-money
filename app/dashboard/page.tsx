@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { computeStatus } from "@/lib/status";
-import { effectivePaid, effectiveRemaining, isBusinessItem, isMarketingItem } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const OBSIDIAN   = "#111111";
@@ -152,40 +152,7 @@ export default function DashboardPage() {
   async function handleMoveSection(id: string, targetSection: string) {
     const expense = expenses.find(e => e.id === id);
     if (!expense) return;
-    // Business & Marketing buckets are identified by category, so a move OUT of them
-    // must also reset the category — otherwise the section filter pulls the row right
-    // back and the move appears to do nothing.
-    const categoryBound = isBusinessItem(expense) || expense.category === "Marketing";
-    const keepAnnual    = expense.frequency === "annual";
-    const updates: Partial<Expense> = {};
-    switch (targetSection) {
-      case "expenses":
-        updates.frequency = "monthly";
-        if (categoryBound) updates.category = "Monthly";
-        break;
-      case "business":
-        updates.frequency = keepAnnual ? "annual" : "monthly";
-        updates.category  = "GR Business";
-        break;
-      case "marketing":
-        updates.frequency = keepAnnual ? "annual" : "monthly";
-        updates.category  = "Marketing";
-        break;
-      case "annual":
-        updates.frequency = "annual";
-        if (categoryBound) updates.category = "Annual";
-        break;
-      case "liens":
-        updates.frequency = "lien";
-        if (categoryBound) updates.category = "Obligation";
-        break;
-      case "groceries":   updates.frequency = "groceries";   updates.category = "Groceries";  break;
-      case "restaurants": updates.frequency = "restaurants"; updates.category = "Dining";     break;
-      case "incidental":  updates.frequency = "incidental";  updates.category = "Incidental"; break;
-      case "fuel":        updates.frequency = "fuel";        updates.category = "Fuel";       break;
-      case "income":      updates.frequency = "income";      updates.category = "Income";     break;
-    }
-    await handleUpdate(id, updates);
+    await handleUpdate(id, movePatch(expense, targetSection as MoveTarget));
   }
 
   async function handleGenerate() {

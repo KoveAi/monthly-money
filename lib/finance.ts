@@ -90,3 +90,46 @@ export function sectionOf(e: Classifiable): LedgerSection {
   ) return e.frequency;
   return "expenses";
 }
+
+export type MoveTarget =
+  | "expenses" | "business" | "marketing" | "annual" | "liens"
+  | "groceries" | "restaurants" | "incidental" | "fuel" | "income";
+
+/** Human labels for each move destination (shared by every move UI). */
+export const MOVE_OPTIONS: { value: MoveTarget; label: string }[] = [
+  { value: "expenses",    label: "Monthly Expenses" },
+  { value: "business",    label: "Business Finances" },
+  { value: "marketing",   label: "Marketing" },
+  { value: "annual",      label: "Annual Expenses" },
+  { value: "liens",       label: "Outstanding Obligations" },
+  { value: "income",      label: "Income" },
+  { value: "groceries",   label: "Groceries" },
+  { value: "restaurants", label: "Restaurants" },
+  { value: "incidental",  label: "Incidental" },
+  { value: "fuel",        label: "Fuel" },
+];
+
+/**
+ * Field patch that relocates an entry into `target`. Business & Marketing are
+ * identified by category, so a move OUT of them also rewrites the category —
+ * otherwise the section filter pulls the row straight back and the move looks
+ * like it did nothing. This is the ONE place move logic lives; every move UI
+ * (desktop dropdown, mobile card, edit modal) goes through it.
+ */
+export function movePatch(e: Classifiable, target: MoveTarget): { frequency: string; category?: string } {
+  const categoryBound = isBusinessItem(e) || e.category === "Marketing";
+  const keepAnnual = e.frequency === "annual";
+  switch (target) {
+    case "expenses":    return categoryBound ? { frequency: "monthly", category: "Monthly" } : { frequency: "monthly" };
+    case "business":    return { frequency: keepAnnual ? "annual" : "monthly", category: "GR Business" };
+    case "marketing":   return { frequency: keepAnnual ? "annual" : "monthly", category: "Marketing" };
+    case "annual":      return categoryBound ? { frequency: "annual", category: "Annual" } : { frequency: "annual" };
+    case "liens":       return categoryBound ? { frequency: "lien", category: "Obligation" } : { frequency: "lien" };
+    case "groceries":   return { frequency: "groceries", category: "Groceries" };
+    case "restaurants": return { frequency: "restaurants", category: "Dining" };
+    case "incidental":  return { frequency: "incidental", category: "Incidental" };
+    case "fuel":        return { frequency: "fuel", category: "Fuel" };
+    case "income":      return { frequency: "income", category: "Income" };
+  }
+  return { frequency: e.frequency };
+}
