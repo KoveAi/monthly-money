@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
+import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -55,7 +56,9 @@ function fmtMonth(mk: string) {
 export default function DashboardPage() {
   const router = useRouter();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  // The whole ledger is loaded once: the month views filter it locally and the
+  // planner needs every month anyway to average across them.
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [loading, setLoading]   = useState(true);
   const [generating, setGenerating] = useState(false);
   const [genMsg, setGenMsg]     = useState<string | null>(null);
@@ -71,7 +74,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"overview" | "income" | "paid" | "unpaid" | "overdue">("overview");
+  const [activeTab, setActiveTab]         = useState<"overview" | "planner" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -119,13 +122,15 @@ export default function DashboardPage() {
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`/api/expenses?monthKey=${monthKey}`);
+      const res  = await fetch("/api/expenses");
       const data = await res.json();
-      setExpenses(Array.isArray(data) ? data : []);
+      setAllExpenses(Array.isArray(data) ? data : []);
     } finally { setLoading(false); }
-  }, [monthKey]);
+  }, []);
 
   useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
+
+  const expenses = useMemo(() => allExpenses.filter(e => e.monthKey === monthKey), [allExpenses, monthKey]);
 
   useEffect(() => {
     const d = `${monthKey}-01`;
@@ -511,11 +516,12 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
-          {(["overview", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
+          {(["overview", "planner", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
             const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
             const attn   = tab === "overdue" || tab === "unpaid";
             const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
             const label  = tab === "overview" ? "OVERVIEW"
+                         : tab === "planner"  ? "PLANNER"
                          : tab === "income"   ? "INCOME"
                          : tab === "paid"     ? "PAID"
                          : tab === "unpaid"   ? `UNPAID${unpaidCount > 0 ? ` (${unpaidCount})` : ""}`
@@ -1073,6 +1079,13 @@ export default function DashboardPage() {
                 commitInline={commitSpendInline} />}
             </SectionBlock>
           </>
+        )}
+
+        {/* ── PLANNER TAB ───────────────────────────────────────────────── */}
+        {activeTab === "planner" && (
+          loading
+            ? <Loader />
+            : <BudgetPlanner allExpenses={allExpenses} monthKey={monthKey} />
         )}
 
         {/* ── INCOME TAB ────────────────────────────────────────────────── */}
