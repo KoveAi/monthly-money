@@ -335,10 +335,16 @@ export default function DashboardPage() {
   const fuelSpent = fuel.reduce((s, e) => s + e.amount, 0);
   const varSpent  = grSpent + resSpent + incSpent + fuelSpent;
 
-  const totalRem    = mRem + aRem + lRem + grRem + mktRem;
-  const totalDue    = mDue + aDue + lDue + grDue + mktDue;
   const totalPaidAll = mPaid + aPaid + lPaid + grPaid + mktPaid;
   const netBalance  = iRec - totalPaidAll - varSpent;
+
+  // Obligations are balances carried until they clear, not costs of running this month.
+  // They stay out of the period percentages below — otherwise a five-figure lien makes
+  // every month read as barely paid — and get their own insight instead. Money actually
+  // put against them still counts in totalPaidAll, because it really did leave.
+  const periodDue  = mDue + aDue + grDue + mktDue;
+  const periodPaid = mPaid + aPaid + grPaid + mktPaid;
+  const periodRem  = mRem + aRem + grRem + mktRem;
 
   // Only bill-type entries have meaningful statuses
   const billExpenses = expenses.filter(e => ["monthly", "annual", "lien"].includes(e.frequency) || isBusinessItem(e) || isMarketingItem(e));
@@ -357,13 +363,20 @@ export default function DashboardPage() {
 
   // ── AI Insights ────────────────────────────────────────────────────────────
   const insights: { text: string; tone: "warning" | "positive" | "neutral" }[] = [];
-  const budgetPct   = totalDue > 0 ? Math.round((totalPaidAll / totalDue) * 100) : 0;
-  const coveragePct = totalRem > 0 ? Math.round((iRec / totalRem) * 100) : 100;
-  const grPortfolioPct = totalDue > 0 ? Math.round((grDue / totalDue) * 100) : 0;
+  const budgetPct   = periodDue > 0 ? Math.round((periodPaid / periodDue) * 100) : 0;
+  const coveragePct = periodRem > 0 ? Math.round((iRec / periodRem) * 100) : 100;
+  const grPortfolioPct = periodDue > 0 ? Math.round((grDue / periodDue) * 100) : 0;
 
   if (pastDueCount > 0)
     insights.push({ text: `${pastDueCount} obligation${pastDueCount > 1 ? "s" : ""} past due — immediate attention advised.`, tone: "warning" });
-  insights.push({ text: `${budgetPct}% of total obligations fulfilled this period — ${fmt(totalDue - totalPaidAll)} outstanding across all categories.`, tone: budgetPct >= 75 ? "positive" : "neutral" });
+  insights.push({ text: `${budgetPct}% of this period's bills fulfilled — ${fmt(periodDue - periodPaid)} outstanding across monthly, annual, business and marketing.`, tone: budgetPct >= 75 ? "positive" : "neutral" });
+  if (lDue > 0)
+    insights.push({
+      text: lPaid > 0
+        ? `Outstanding obligations: ${fmt(lPaid)} paid down this month, ${fmt(lRem)} still owed. Carried as a balance, not a monthly bill.`
+        : `Outstanding obligations: ${fmt(lRem)} still owed, nothing paid down this month. Carried as a balance, not a monthly bill.`,
+      tone: lPaid > 0 ? "positive" : "neutral",
+    });
   if (iRec > 0)
     insights.push({ text: `Received income covers ${Math.min(coveragePct, 999)}% of current outstanding obligations.`, tone: coveragePct >= 100 ? "positive" : "neutral" });
   if (grPortfolioPct > 0)
