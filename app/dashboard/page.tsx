@@ -77,13 +77,16 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "planner" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("advisor");
+  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "planner" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(t);
   }, []);
+  // Planner and Reduce are analysis tools rather than everyday views, so they stay
+  // off the main strip until asked for.
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const [openInsights, setOpenInsights] = useState(true);
   const [openMonthly, setOpenMonthly] = useState(false);
   const [incomeInlineId,    setIncomeInlineId]    = useState<string | null>(null);
@@ -538,14 +541,12 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
-          {(["advisor", "overview", "planner", "reduce", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
+          {(["overview", "advisor", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
             const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
             const attn   = tab === "overdue" || tab === "unpaid";
             const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
             const label  = tab === "advisor"  ? "ADVISOR"
                          : tab === "overview" ? "OVERVIEW"
-                         : tab === "planner"  ? "PLANNER"
-                         : tab === "reduce"   ? "REDUCE"
                          : tab === "income"   ? "INCOME"
                          : tab === "paid"     ? "PAID"
                          : tab === "unpaid"   ? `UNPAID${unpaidCount > 0 ? ` (${unpaidCount})` : ""}`
@@ -560,6 +561,31 @@ export default function DashboardPage() {
               </button>
             );
           })}
+
+          <div className="ml-auto flex items-center">
+            {(showAnalysis || activeTab === "planner" || activeTab === "reduce") && (
+              (["planner", "reduce"] as const).map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  className="px-5 py-3.5 text-xs transition-all"
+                  style={activeTab === tab
+                    ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
+                    : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
+                  {tab === "planner" ? "PLANNER" : "REDUCE"}
+                </button>
+              ))
+            )}
+            <button
+              onClick={() => {
+                const open = !showAnalysis;
+                setShowAnalysis(open);
+                if (!open && (activeTab === "planner" || activeTab === "reduce")) setActiveTab("overview");
+              }}
+              className="px-4 py-3.5 text-xs transition-all"
+              style={{ color: "#BDBAB6", letterSpacing: "0.14em" }}
+              title="Planning and reduction tools">
+              ANALYSIS {showAnalysis || activeTab === "planner" || activeTab === "reduce" ? "▾" : "▸"}
+            </button>
+          </div>
         </div>
       </div>
 
