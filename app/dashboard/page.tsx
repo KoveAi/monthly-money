@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { TrimPlan } from "@/components/TrimPlan";
+import { baselineMonths, buildBaseline, summarise } from "@/lib/advisor";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, budgetAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -311,6 +312,12 @@ export default function DashboardPage() {
   const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
   const fuel        = sortAlpha(expenses.filter(e => e.frequency === "fuel"));
 
+  // ── Advisor baseline ───────────────────────────────────────────────────────
+  // What each line cost in the most recent closed months — June and July when you
+  // are looking at August. Every table compares its rows against this.
+  const advisorMonths   = useMemo(() => baselineMonths(allExpenses, monthKey), [allExpenses, monthKey]);
+  const advisorBaseline = useMemo(() => buildBaseline(allExpenses, advisorMonths), [allExpenses, advisorMonths]);
+
   // ── Stats ──────────────────────────────────────────────────────────────────
   const mDue  = monthly.reduce((s, e) => s + budgetAmount(e), 0);
   const mPaid = monthly.reduce((s, e) => s + effectivePaid(e), 0);
@@ -440,7 +447,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="p-4">
-            <ExpenseTable expenses={g.rows} onUpdate={handleUpdate} onDelete={handleDelete}
+            <ExpenseTable expenses={g.rows} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
               headerColor={g.color} headerTextColor={g.text} onMove={handleMoveSection}
               categoryOptions={g.label === "Business Finances" ? ["GR Business", "Kove Ai-Business", "Business Finance"] : undefined} />
           </div>
@@ -565,6 +572,40 @@ export default function DashboardPage() {
         {/* ── OVERVIEW TAB ──────────────────────────────────────────────── */}
         {activeTab === "overview" && (
           <>
+            {/* ── Advisor ──────────────────────────────────────────────────── */}
+            {advisorMonths.length > 0 && (() => {
+              const a = summarise(expenses, advisorBaseline, advisorMonths, iRec, iExp);
+              const ok = a.balance >= 0;
+              return (
+                <div className="mb-4 px-6 py-5" style={{
+                  background: ok ? "#F8FBF9" : "#FDF8F8",
+                  border: `1px solid ${ok ? "#C6DCCD" : "#D4B5B5"}`,
+                  borderLeft: `2px solid ${ok ? MUTED_GRN : MUTED_RED}`,
+                }}>
+                  <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
+                    <p className="text-xs" style={{ color: ok ? MUTED_GRN : MUTED_RED, letterSpacing: "0.2em" }}>
+                      {ok ? `ON TARGET — ${fmt(a.balance)} UNDER INCOME` : `OVERSPENDING BY ${fmt(Math.abs(a.balance))}`}
+                    </p>
+                    <span className="text-xs" style={{ color: WARM_GRAY }}>
+                      Income <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(a.incomeExpected)}</strong>
+                      {a.stillToCome > 0 && <span style={{ color: "#BDBAB6" }}> · {fmt(a.incomeReceived)} in, {fmt(a.stillToCome)} to come</span>}
+                    </span>
+                    <span className="text-xs" style={{ color: WARM_GRAY }}>
+                      Spending <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(a.spending)}</strong>
+                    </span>
+                    {a.overCount > 0 && (
+                      <span className="text-xs" style={{ color: WARM_GRAY }}>
+                        <strong style={{ color: MUTED_RED, fontWeight: 500 }}>{a.overCount} line{a.overCount === 1 ? "" : "s"} over baseline</strong> by {fmt(a.overspend)}
+                      </span>
+                    )}
+                    <span className="text-xs ml-auto" style={{ color: "#BDBAB6", letterSpacing: "0.06em" }}>
+                      COMPARED WITH {advisorMonths.map(fmtMonth).join(" & ").toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Summary stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {[
@@ -721,7 +762,7 @@ export default function DashboardPage() {
               )}
               {loading
                 ? <Loader />
-                : <ExpenseTable expenses={applySearch(monthly, searchMonthly)} onUpdate={handleUpdate} onDelete={handleDelete}
+                : <ExpenseTable expenses={applySearch(monthly, searchMonthly)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
                     headerColor={OBSIDIAN} onMove={handleMoveSection} />}
             </SectionBlock>
 
@@ -793,7 +834,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete}
+                <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
                   headerColor={GR_BEIGE} headerTextColor={OBSIDIAN}
                   categoryOptions={["GR Business", "Kove Ai-Business"]} onMove={handleMoveSection} />
               )}
@@ -859,7 +900,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(marketing, searchMarketing)} onUpdate={handleUpdate} onDelete={handleDelete}
+                <ExpenseTable expenses={applySearch(marketing, searchMarketing)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
                   headerColor={MKT_MAUVE} onMove={handleMoveSection} />
               )}
             </SectionBlock>
@@ -924,7 +965,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(annual, searchAnnual)} onUpdate={handleUpdate} onDelete={handleDelete}
+                <ExpenseTable expenses={applySearch(annual, searchAnnual)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
                   headerColor={OBSIDIAN} onMove={handleMoveSection} />
               )}
             </SectionBlock>
@@ -989,7 +1030,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(liens, searchLiens)} onUpdate={handleUpdate} onDelete={handleDelete}
+                <ExpenseTable expenses={applySearch(liens, searchLiens)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
                   headerColor={OBSIDIAN} onMove={handleMoveSection} />
               )}
             </SectionBlock>

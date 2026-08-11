@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { computeStatus, ALL_STATUSES } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
+import { verdictFor, type Baseline } from "@/lib/advisor";
 
 export interface Expense {
   id: string;
@@ -34,6 +35,8 @@ interface ExpenseTableProps {
   headerTextColor?: string;
   categoryOptions?: string[];
   onMove?: (id: string, targetSection: string) => Promise<void>;
+  /** What each line cost in recent closed months. Omit to hide the target column. */
+  baseline?: Map<string, Baseline>;
 }
 
 function fmt(v: number) {
@@ -309,7 +312,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
 }
 
 // ─── Main Table ───────────────────────────────────────────────────────────────
-export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2b4e", headerTextColor, categoryOptions, onMove }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2b4e", headerTextColor, categoryOptions, onMove, baseline }: ExpenseTableProps) {
   const [editingRow, setEditingRow]     = useState<Expense | null>(null);
   const [inlineId, setInlineId]         = useState<string | null>(null);
   const [inlineField, setInlineField]   = useState<string | null>(null);
@@ -410,7 +413,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr style={{ background: headerColor }}>
-                {["Expense", "Category", "Due Date", "Amount Due", "Amount Paid", "Remaining", "Status", "Notes", ""].map((h, i) => (
+                {["Expense", "Category", "Due Date", "Amount Due", "Amount Paid", "Remaining", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
                   <th key={i} className="px-3 py-3"
                     style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 5 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
                     {h}
@@ -420,7 +423,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
+                <tr><td colSpan={baseline ? 10 : 9} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
               )}
               {filtered.map((expense) => {
                 const status    = getStatus(expense);
@@ -531,6 +534,8 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                     </td>
 
                     {/* Status */}
+                    {baseline && <AdvisorCell expense={expense} baseline={baseline} />}
+
                     <td className="px-3 py-2.5 whitespace-nowrap cursor-pointer" style={{ borderRight: `1px solid ${BORDER}` }}
                       onClick={() => !isInline && startInline(expense.id, "status", expense.status ?? "")}>
                       {isInline && inlineField === "status" ? (
@@ -608,7 +613,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalAmount)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ? "#15803d" : "#86efac", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalPaid)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalRemaining)}</td>
-                  <td colSpan={3} />
+                  <td colSpan={baseline ? 4 : 3} />
                 </tr>
               </tfoot>
             )}
@@ -616,5 +621,40 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * The advisor column: is this line costing more than it used to, and by how much.
+ * Deliberately the whole feature — a verdict and a number, nothing to configure.
+ */
+function AdvisorCell({ expense, baseline }: { expense: Expense; baseline: Map<string, Baseline> }) {
+  const v = verdictFor(expense, baseline);
+  const BORDER = "#E8E3DC";
+
+  const style =
+    v.state === "over"      ? { color: "#8B2020", bg: "#FAF2F2", border: "#D4B5B5" }
+    : v.state === "on-target" ? { color: "#2A6B4A", bg: "#F2F8F5", border: "#B5D4C0" }
+    : { color: "#9A9A9A", bg: "#F8F8F8", border: "#E0E0E0" };
+
+  const label =
+    v.state === "over"      ? `OVER ${fmt(v.over)}`
+    : v.state === "on-target" ? "ON TARGET"
+    : v.state === "paused"    ? "PAUSED"
+    : v.state === "balance"   ? "BALANCE"
+    : "NEW";
+
+  return (
+    <td className="px-3 py-2.5 whitespace-nowrap" style={{ borderRight: `1px solid ${BORDER}` }}>
+      <span className="inline-flex items-center px-2 py-0.5 text-xs"
+        style={{ color: style.color, background: style.bg, border: `1px solid ${style.border}`, letterSpacing: "0.06em" }}>
+        {label}
+      </span>
+      {v.baseline !== null && (
+        <span className="block text-xs mt-0.5" style={{ color: "#BDBAB6" }}>
+          was {fmt(v.baseline)}
+        </span>
+      )}
+    </td>
   );
 }
