@@ -77,7 +77,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"overview" | "planner" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
+  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "planner" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("advisor");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -538,11 +538,12 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
-          {(["overview", "planner", "reduce", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
+          {(["advisor", "overview", "planner", "reduce", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
             const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
             const attn   = tab === "overdue" || tab === "unpaid";
             const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
-            const label  = tab === "overview" ? "OVERVIEW"
+            const label  = tab === "advisor"  ? "ADVISOR"
+                         : tab === "overview" ? "OVERVIEW"
                          : tab === "planner"  ? "PLANNER"
                          : tab === "reduce"   ? "REDUCE"
                          : tab === "income"   ? "INCOME"
@@ -573,9 +574,6 @@ export default function DashboardPage() {
         {/* ── OVERVIEW TAB ──────────────────────────────────────────────── */}
         {activeTab === "overview" && (
           <>
-            <AdvisorPanel allExpenses={allExpenses} monthEntries={expenses} monthKey={monthKey}
-              now={now} incomeExpected={iExp} />
-
             {/* Summary stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {[
@@ -1105,6 +1103,19 @@ export default function DashboardPage() {
                 commitInline={commitSpendInline} />}
             </SectionBlock>
           </>
+        )}
+
+        {/* ── ADVISOR TAB ───────────────────────────────────────────────── */}
+        {activeTab === "advisor" && (
+          loading ? <Loader /> : (
+            <div className="py-2">
+              <p className="text-xs mb-6" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>
+                ADVISOR — {fmtMonth(monthKey).toUpperCase()}
+              </p>
+              <AdvisorPanel allExpenses={allExpenses} monthEntries={expenses} monthKey={monthKey}
+                now={now} incomeExpected={iExp} />
+            </div>
+          )
         )}
 
         {/* ── PLANNER TAB ───────────────────────────────────────────────── */}
