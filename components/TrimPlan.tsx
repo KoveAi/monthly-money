@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Expense } from "@/components/ExpenseTable";
 import { buildTrimPlan, targetsBySection, TIER_META, type Tier, type TrimItem } from "@/lib/trim";
+import { rollupMonths, suggestPlan, estimatePlan, annualSetAside, type IncomeBasis } from "@/lib/budget";
 
 const OBSIDIAN  = "#111111";
 const GOLD      = "#B8976A";
@@ -37,25 +38,48 @@ type Store = Record<string, Record<string, number>>;
 
 export function TrimPlan({ allExpenses, monthKey }: { allExpenses: Expense[]; monthKey: string }) {
   const [store, setStore] = useState<Store>({});
+  const [plan, setPlan] = useState<{ income?: number; basis?: IncomeBasis; perCategory?: Record<string, number> }>({});
   const [openTier, setOpenTier] = useState<Tier | null>("discretionary");
   const [showKept, setShowKept] = useState(false);
 
-  useEffect(() => { setStore(read<Store>(STORE_KEY, {})); }, []);
+  useEffect(() => {
+    const sync = () => {
+      setStore(read<Store>(STORE_KEY, {}));
+      setPlan(read<Record<string, any>>(PLAN_KEY, {})[monthKey] ?? {});
+    };
+    sync();
+    window.addEventListener("mm-plan-updated", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("mm-plan-updated", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [monthKey]);
 
-  // The planner is the source of truth for income and the two set-asides, so the
-  // reduction target is measured against exactly the figures shown on that tab.
-  const plan = read<Record<string, { income?: number; perCategory?: Record<string, number> }>>(PLAN_KEY, {})[monthKey] ?? {};
+  // Income and the two set-asides come from the planner — the same derivation, so
+  // the two tabs can never disagree. A figure you typed there wins; otherwise this
+  // falls back to what the planner suggests from your history, exactly as it does.
+  const derived = useMemo(() => {
+    const months  = rollupMonths(allExpenses);
+    const history = months.filter(m => m.monthKey < monthKey);
+    const current = months.find(m => m.monthKey === monthKey) ?? null;
+    const annual  = annualSetAside(allExpenses, monthKey);
+    const base    = (current && current.entries > 0) ? current : (history.length ? history[history.length - 1] : null);
+    return history.length
+      ? suggestPlan(history, plan.basis ?? "average", annual.monthly)
+      : estimatePlan(base, annual.monthly);
+  }, [allExpenses, monthKey, plan.basis]);
+
+  const income        = plan.income ?? derived.plannedIncome;
+  const annualMonthly = plan.perCategory?.annual ?? derived.perCategory.annual;
+  const debtPaydown   = plan.perCategory?.liens  ?? derived.perCategory.liens;
+  const incomeIsYours = plan.income !== undefined;
 
   const overrides = store[monthKey] ?? {};
 
   const result = useMemo(() => buildTrimPlan({
-    entries: allExpenses,
-    monthKey,
-    income: plan.income ?? 0,
-    annualMonthly: plan.perCategory?.annual ?? 0,
-    debtPaydown: plan.perCategory?.liens ?? 0,
-    overrides,
-  }), [allExpenses, monthKey, plan.income, plan.perCategory, overrides]);
+    entries: allExpenses, monthKey, income, annualMonthly, debtPaydown, overrides,
+  }), [allExpenses, monthKey, income, annualMonthly, debtPaydown, overrides]);
 
   function setTarget(key: string, value: number | null) {
     setStore(prev => {
@@ -78,16 +102,18 @@ export function TrimPlan({ allExpenses, monthKey }: { allExpenses: Expense[]; mo
     window.dispatchEvent(new Event("mm-plan-updated"));
   }
 
-  if (!plan.income) {
+  // Only when there is genuinely no income anywhere — not merely no override.
+  if (!income) {
     return (
       <div className="py-2">
         <Title monthKey={monthKey} />
         <div className="px-8 py-16 text-center" style={{ background: SURFACE, border: `1px solid ${BORDER}` }}>
-          <p className="text-xs mb-3" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>SET YOUR INCOME FIRST</p>
+          <p className="text-xs mb-3" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>NO INCOME ON RECORD</p>
           <p className="text-sm" style={{ color: WARM_GRAY, maxWidth: 520, margin: "0 auto" }}>
-            There is nothing to reduce toward until this knows what you actually earn. Open the{" "}
-            <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>PLANNER</strong> tab, set PLANNED INCOME to the figure you
-            can count on every month, and this tab will work out what has to change to get under it.
+            There is nothing to reduce toward until this knows what you earn. Record income on the{" "}
+            <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>INCOME</strong> tab, or set PLANNED INCOME on the{" "}
+            <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>PLANNER</strong> tab, and this will work out what has to
+            change to get under it.
           </p>
         </div>
       </div>
@@ -123,7 +149,7 @@ export function TrimPlan({ allExpenses, monthKey }: { allExpenses: Expense[]; mo
       {/* ── Where you are, where this gets you ────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
         {[
-          { label: "Income",        value: fmt(result.income),        sub: "what you can count on",   accent: OBSIDIAN },
+          { label: "Income",        value: fmt(result.income),        sub: incomeIsYours ? "your figure, from the planner" : `averaged from ${derived.monthsUsed.length} month${derived.monthsUsed.length === 1 ? "" : "s"}`, accent: OBSIDIAN },
           { label: "Spending Now",  value: fmt(result.currentTotal),  sub: "bills + variable",        accent: OBSIDIAN },
           { label: "Set-Aside",     value: fmt(result.annualMonthly + result.debtPaydown), sub: "annual + obligations", accent: "#8A8078" },
           { label: "Gap Now",       value: fmt(result.gapNow),        sub: result.gapNow >= 0 ? "clear" : "short every month", accent: result.gapNow >= 0 ? MUTED_GRN : MUTED_RED },
