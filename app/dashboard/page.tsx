@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { TrimPlan } from "@/components/TrimPlan";
-import { baselineMonths, buildBaseline, summarise } from "@/lib/advisor";
+import { baselineMonths, buildBaseline } from "@/lib/advisor";
+import { AdvisorPanel } from "@/components/AdvisorPanel";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, budgetAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -572,39 +573,8 @@ export default function DashboardPage() {
         {/* ── OVERVIEW TAB ──────────────────────────────────────────────── */}
         {activeTab === "overview" && (
           <>
-            {/* ── Advisor ──────────────────────────────────────────────────── */}
-            {advisorMonths.length > 0 && (() => {
-              const a = summarise(expenses, advisorBaseline, advisorMonths, iRec, iExp);
-              const ok = a.balance >= 0;
-              return (
-                <div className="mb-4 px-6 py-5" style={{
-                  background: ok ? "#F8FBF9" : "#FDF8F8",
-                  border: `1px solid ${ok ? "#C6DCCD" : "#D4B5B5"}`,
-                  borderLeft: `2px solid ${ok ? MUTED_GRN : MUTED_RED}`,
-                }}>
-                  <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
-                    <p className="text-xs" style={{ color: ok ? MUTED_GRN : MUTED_RED, letterSpacing: "0.2em" }}>
-                      {ok ? `ON TARGET — ${fmt(a.balance)} UNDER INCOME` : `OVERSPENDING BY ${fmt(Math.abs(a.balance))}`}
-                    </p>
-                    <span className="text-xs" style={{ color: WARM_GRAY }}>
-                      Income <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(a.incomeExpected)}</strong>
-                      {a.stillToCome > 0 && <span style={{ color: "#BDBAB6" }}> · {fmt(a.incomeReceived)} in, {fmt(a.stillToCome)} to come</span>}
-                    </span>
-                    <span className="text-xs" style={{ color: WARM_GRAY }}>
-                      Spending <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(a.spending)}</strong>
-                    </span>
-                    {a.overCount > 0 && (
-                      <span className="text-xs" style={{ color: WARM_GRAY }}>
-                        <strong style={{ color: MUTED_RED, fontWeight: 500 }}>{a.overCount} line{a.overCount === 1 ? "" : "s"} over baseline</strong> by {fmt(a.overspend)}
-                      </span>
-                    )}
-                    <span className="text-xs ml-auto" style={{ color: "#BDBAB6", letterSpacing: "0.06em" }}>
-                      COMPARED WITH {advisorMonths.map(fmtMonth).join(" & ").toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
+            <AdvisorPanel allExpenses={allExpenses} monthEntries={expenses} monthKey={monthKey}
+              now={now} incomeExpected={iExp} />
 
             {/* Summary stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
