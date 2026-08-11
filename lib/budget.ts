@@ -215,7 +215,13 @@ export function suggestPlan(history: MonthRollup[], basis: IncomeBasis, annualMo
   for (const k of SECTION_KEYS) {
     if (k === "annual") continue;
     const basisKey = planBasis(k);
-    perCategory[k] = round2(history.reduce((s, m) => s + m[basisKey][k], 0) / n);
+    // A month with nothing recorded against an envelope is a gap in the records, not
+    // a month where nobody ate. Averaging those zeros in would quietly halve the
+    // budget, so variable lines average only over months that actually recorded spend.
+    const months = SECTION_META[k].kind === "variable"
+      ? history.filter(m => m[basisKey][k] > 0)
+      : history;
+    perCategory[k] = months.length ? round2(months.reduce((s, m) => s + m[basisKey][k], 0) / months.length) : 0;
   }
 
   const received = history.filter(m => m.incomeReceived > 0).map(m => m.incomeReceived);

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
+import { TrimPlan } from "@/components/TrimPlan";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -74,7 +75,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"overview" | "planner" | "income" | "paid" | "unpaid" | "overdue">("overview");
+  const [activeTab, setActiveTab]         = useState<"overview" | "planner" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -529,12 +530,13 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
-          {(["overview", "planner", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
+          {(["overview", "planner", "reduce", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
             const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
             const attn   = tab === "overdue" || tab === "unpaid";
             const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
             const label  = tab === "overview" ? "OVERVIEW"
                          : tab === "planner"  ? "PLANNER"
+                         : tab === "reduce"   ? "REDUCE"
                          : tab === "income"   ? "INCOME"
                          : tab === "paid"     ? "PAID"
                          : tab === "unpaid"   ? `UNPAID${unpaidCount > 0 ? ` (${unpaidCount})` : ""}`
@@ -1099,6 +1101,11 @@ export default function DashboardPage() {
           loading
             ? <Loader />
             : <BudgetPlanner allExpenses={allExpenses} monthKey={monthKey} />
+        )}
+
+        {/* ── REDUCE TAB ────────────────────────────────────────────────── */}
+        {activeTab === "reduce" && (
+          loading ? <Loader /> : <TrimPlan allExpenses={allExpenses} monthKey={monthKey} />
         )}
 
         {/* ── INCOME TAB ────────────────────────────────────────────────── */}

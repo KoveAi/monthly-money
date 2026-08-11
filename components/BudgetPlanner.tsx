@@ -59,6 +59,15 @@ export function BudgetPlanner({ allExpenses, monthKey }: { allExpenses: Expense[
   useEffect(() => {
     setStore(readStore());
     setNow(new Date());
+    // The reduction tab writes category targets into the same store; pick them up
+    // without a reload so "send to planner" lands immediately.
+    const sync = () => setStore(readStore());
+    window.addEventListener("mm-plan-updated", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("mm-plan-updated", sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   function patchPlan(patch: StoredPlan) {
