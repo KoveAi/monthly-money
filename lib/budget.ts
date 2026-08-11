@@ -1,4 +1,4 @@
-import { effectivePaid, sectionOf, type Classifiable, type LedgerSection, type Settleable } from "@/lib/finance";
+import { budgetAmount, effectivePaid, isPaused, sectionOf, type Classifiable, type LedgerSection, type Settleable } from "@/lib/finance";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Budget planner math. Everything here is derived from the ledger that already
@@ -100,14 +100,14 @@ export function rollupMonths(entries: BudgetEntry[]): MonthRollup[] {
 
     const section = sectionOf(e);
     if (section === "income") {
-      m.incomeExpected += e.amount;
+      m.incomeExpected += budgetAmount(e);
       m.incomeReceived += effectivePaid(e);
       continue;
     }
 
     const isVariable = (VARIABLE_KEYS as readonly string[]).includes(section);
-    m.due[section]  += e.amount;
-    m.paid[section] += isVariable ? e.amount : effectivePaid(e);
+    m.due[section]  += budgetAmount(e);
+    m.paid[section] += isVariable ? budgetAmount(e) : effectivePaid(e);
   }
 
   const months = Array.from(byMonth.values()).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
@@ -166,7 +166,7 @@ export interface AnnualSetAside {
 export function annualSetAside(entries: BudgetEntry[], upTo?: string): AnnualSetAside {
   const latest = new Map<string, AnnualObligation>();
   for (const e of entries) {
-    if (e.frequency !== "annual") continue;
+    if (e.frequency !== "annual" || isPaused(e)) continue;
     if (upTo && e.monthKey > upTo) continue;
     const key = e.description.trim().toLowerCase();
     const seen = latest.get(key);

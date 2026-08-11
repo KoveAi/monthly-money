@@ -8,6 +8,7 @@ export type StatusType =
   | "Scheduled"
   | "Due"
   | "Cancelled"
+  | "Paused"
   | "Partial"
   | "Forwarded";
 
@@ -52,6 +53,7 @@ export function getStatusStyle(status: StatusType): StatusColor {
     case "Scheduled":      return { bg: "#dbeafe", text: "#1d4ed8", border: "#bfdbfe" };
     case "Due":            return { bg: "#f1f5f9", text: "#475569", border: "#e2e8f0" };
     case "Cancelled":      return { bg: "#f8fafc", text: "#94a3b8", border: "#e2e8f0" };
+    case "Paused":         return { bg: "#f5f3f0", text: "#6b6460", border: "#ddd6cc" };
     case "Partial":        return { bg: "#ccfbf1", text: "#0f766e", border: "#99f6e4" };
     case "Forwarded":      return { bg: "#ede9fe", text: "#6d28d9", border: "#ddd6fe" };
     default:               return { bg: "#f1f5f9", text: "#64748b", border: "#e2e8f0" };
@@ -60,5 +62,5 @@ export function getStatusStyle(status: StatusType): StatusColor {
 
 export const ALL_STATUSES: StatusType[] = [
   "Paid", "Paid as Agreed", "Past Due", "Due Today", "Upcoming",
-  "Scheduled", "Due", "Partial", "Forwarded", "Cancelled",
+  "Scheduled", "Due", "Partial", "Forwarded", "Paused", "Cancelled",
 ];

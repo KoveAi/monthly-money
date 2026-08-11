@@ -6,7 +6,7 @@ import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { TrimPlan } from "@/components/TrimPlan";
 import { computeStatus } from "@/lib/status";
-import { effectivePaid, effectiveRemaining, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, budgetAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const OBSIDIAN   = "#111111";
@@ -312,28 +312,28 @@ export default function DashboardPage() {
   const fuel        = sortAlpha(expenses.filter(e => e.frequency === "fuel"));
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  const mDue  = monthly.reduce((s, e) => s + e.amount, 0);
+  const mDue  = monthly.reduce((s, e) => s + budgetAmount(e), 0);
   const mPaid = monthly.reduce((s, e) => s + effectivePaid(e), 0);
   const mRem  = monthly.reduce((s, e) => s + effectiveRemaining(e), 0);
-  const aDue  = annual.reduce((s, e) => s + e.amount, 0);
+  const aDue  = annual.reduce((s, e) => s + budgetAmount(e), 0);
   const aPaid = annual.reduce((s, e) => s + effectivePaid(e), 0);
   const aRem  = annual.reduce((s, e) => s + effectiveRemaining(e), 0);
-  const lDue  = liens.reduce((s, e) => s + e.amount, 0);
+  const lDue  = liens.reduce((s, e) => s + budgetAmount(e), 0);
   const lPaid = liens.reduce((s, e) => s + effectivePaid(e), 0);
   const lRem  = liens.reduce((s, e) => s + effectiveRemaining(e), 0);
-  const grDue  = grBusiness.reduce((s, e) => s + e.amount, 0);
+  const grDue  = grBusiness.reduce((s, e) => s + budgetAmount(e), 0);
   const grPaid = grBusiness.reduce((s, e) => s + effectivePaid(e), 0);
   const grRem  = grBusiness.reduce((s, e) => s + effectiveRemaining(e), 0);
-  const mktDue  = marketing.reduce((s, e) => s + e.amount, 0);
+  const mktDue  = marketing.reduce((s, e) => s + budgetAmount(e), 0);
   const mktPaid = marketing.reduce((s, e) => s + effectivePaid(e), 0);
   const mktRem  = marketing.reduce((s, e) => s + effectiveRemaining(e), 0);
-  const iExp  = income.reduce((s, e) => s + e.amount, 0);
+  const iExp  = income.reduce((s, e) => s + budgetAmount(e), 0);
   const iRec  = income.reduce((s, e) => s + effectivePaid(e), 0);
 
-  const grSpent   = groceries.reduce((s, e) => s + e.amount, 0);
-  const resSpent  = restaurants.reduce((s, e) => s + e.amount, 0);
-  const incSpent  = incidental.reduce((s, e) => s + e.amount, 0);
-  const fuelSpent = fuel.reduce((s, e) => s + e.amount, 0);
+  const grSpent   = groceries.reduce((s, e) => s + budgetAmount(e), 0);
+  const resSpent  = restaurants.reduce((s, e) => s + budgetAmount(e), 0);
+  const incSpent  = incidental.reduce((s, e) => s + budgetAmount(e), 0);
+  const fuelSpent = fuel.reduce((s, e) => s + budgetAmount(e), 0);
   const varSpent  = grSpent + resSpent + incSpent + fuelSpent;
 
   const totalPaidAll = mPaid + aPaid + lPaid + grPaid + mktPaid;

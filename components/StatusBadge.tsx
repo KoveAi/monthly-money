@@ -18,6 +18,7 @@ function getElegantStyle(status: string): { color: string; bg: string; border: s
     case "Partial":        return { color: "#2A6B5A", bg: "#F2FAF8", border: "#B5D4CC" };
     case "Forwarded":      return { color: "#5A3A7A", bg: "#F6F2FA", border: "#C8B5D4" };
     case "Cancelled":      return { color: "#9A9A9A", bg: "#F8F8F8", border: "#E0E0E0" };
+    case "Paused":         return { color: "#6B6460", bg: "#F5F3F0", border: "#DDD6CC" };
     default:               return { color: "#6B6460", bg: "#FAF9F6", border: "#E8E3DC" };
   }
 }

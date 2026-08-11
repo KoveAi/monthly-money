@@ -25,6 +25,7 @@ export interface Settleable {
  *     never treated as settled in full.
  */
 export function effectivePaid(e: Settleable): number {
+  if (isPaused(e)) return 0;
   if (e.amountPaid > 0) return e.amountPaid;
   if (e.paymentDate) return e.amount;
   const st = computeStatus(e);
@@ -33,8 +34,23 @@ export function effectivePaid(e: Settleable): number {
 
 /** Outstanding balance still owed (never negative). */
 export function effectiveRemaining(e: Settleable): number {
-  return Math.max(0, e.amount - effectivePaid(e));
+  return isPaused(e) ? 0 : Math.max(0, e.amount - effectivePaid(e));
 }
+
+/**
+ * A line that is on hold: kept on the books with its amount intact so it can be
+ * restarted, but weighing nothing while it is paused. Distinct from "Cancelled",
+ * which is gone for good, and from zeroing the amount, which loses what it costs.
+ */
+export const isPaused = (e: { status: string | null }) => e.status === "Paused";
+
+/**
+ * What a line contributes to a budget. Every total — due, spent, planned, averaged —
+ * goes through this rather than reading `amount` directly, so pausing something takes
+ * it out of the arithmetic everywhere at once while the row stays on screen.
+ */
+export const budgetAmount = (e: { status: string | null; amount: number }) =>
+  isPaused(e) ? 0 : e.amount;
 
 /** Minimum shape needed to route an entry into its ledger section. */
 export interface Classifiable {

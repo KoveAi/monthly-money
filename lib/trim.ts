@@ -1,4 +1,4 @@
-import { sectionOf, type Classifiable, type Settleable } from "@/lib/finance";
+import { budgetAmount, isPaused, sectionOf, type Classifiable, type Settleable } from "@/lib/finance";
 import { SECTION_META, VARIABLE_KEYS, type SectionKey } from "@/lib/budget";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -154,7 +154,8 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
     const section = sectionOf(e);
     if (section === "income" || section === "liens" || e.frequency === "annual") continue;
     if ((VARIABLE_KEYS as readonly string[]).includes(section)) continue;
-    if (e.amount <= 0) continue;
+    // Paused lines are already out of the budget — there is nothing left to cut.
+    if (isPaused(e) || e.amount <= 0) continue;
 
     const key = itemKey(e, section);
     let it = byKey.get(key);
@@ -188,7 +189,7 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
 
   // ── Variable spend: four envelopes, averaged per month ────────────────────
   for (const key of VARIABLE_KEYS) {
-    const rows = entries.filter(e => sectionOf(e) === key && e.amount > 0);
+    const rows = entries.filter(e => sectionOf(e) === key && budgetAmount(e) > 0);
     if (rows.length === 0) continue;
     const perMonth = new Map<string, number>();
     for (const e of rows) perMonth.set(e.monthKey, (perMonth.get(e.monthKey) ?? 0) + e.amount);
