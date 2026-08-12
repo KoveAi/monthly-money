@@ -13,13 +13,18 @@ export type AdvisorEntry = Classifiable & { amount: number; status: string | nul
 export const lineKey = (e: Classifiable) =>
   `${e.description.toLowerCase().replace(/[^a-z0-9]/g, "")}:${e.category.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
 
-/** How many closed months the baseline averages over. */
-export const BASELINE_MONTHS = 2;
+/**
+ * How many closed months the baseline averages over. One, deliberately: July is the
+ * first month recorded accurately, and averaging it with a month that was not would
+ * bury the very thing the baseline is meant to measure. Raise this once several
+ * accurate months have accumulated.
+ */
+export const BASELINE_MONTHS = 1;
 
 /**
- * The months a baseline is drawn from: the most recent closed months before the one
- * being viewed. Viewing August, that is June and July — which is what makes the
- * comparison fair, since both are finished and neither is the month you are still in.
+ * The months a baseline is drawn from: the most recent closed month before the one
+ * being viewed. Viewing August, that is July — finished, and not the month you are
+ * still in, so the comparison is against a complete picture rather than a partial one.
  */
 export function baselineMonths(entries: AdvisorEntry[], monthKey: string, count = BASELINE_MONTHS): string[] {
   const closed = Array.from(new Set(entries.map(e => e.monthKey)))
