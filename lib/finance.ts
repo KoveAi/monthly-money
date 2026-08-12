@@ -45,10 +45,12 @@ export function owedAmount(e: Settleable & { status: string | null }): number {
 
 /**
  * Left over after this month's payment — the amount that rolls into next month.
- * Never negative: overpaying clears the line, it does not create credit.
+ * Negative is a credit: overpay a utility, or have them take a payment twice, and
+ * you are genuinely in front on that line. Flooring it at zero hid real money and
+ * made the account disagree with the ledger.
  */
 export function effectiveRemaining(e: Settleable & { status: string | null }): number {
-  return isPaused(e) ? 0 : Math.max(0, owedAmount(e) - effectivePaid(e));
+  return isPaused(e) ? 0 : owedAmount(e) - effectivePaid(e);
 }
 
 /**

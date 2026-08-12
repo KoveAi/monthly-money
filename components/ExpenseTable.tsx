@@ -560,7 +560,10 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                     </td>
 
                     {/* Remaining */}
-                    <td className="px-3 py-2.5 text-right font-mono text-xs" style={{ borderRight: `1px solid ${BORDER}`, color: remaining === 0 ? "#C8C4BF" : remaining > 500 ? MUTED_RED : OBSIDIAN }}>
+                    <td className="px-3 py-2.5 text-right font-mono text-xs"
+                      style={{ borderRight: `1px solid ${BORDER}`,
+                               color: remaining === 0 ? "#C8C4BF" : remaining < 0 ? MUTED_GRN : remaining > 500 ? MUTED_RED : OBSIDIAN }}
+                      title={remaining < 0 ? "Credit — you are in front on this line" : undefined}>
                       {fmt(remaining)}
                     </td>
 
