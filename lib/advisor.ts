@@ -1,4 +1,4 @@
-import { budgetAmount, sectionOf, type Classifiable } from "@/lib/finance";
+import { budgetAmount, effectivePaid, isPayAsYouGo, sectionOf, type Classifiable } from "@/lib/finance";
 import { VARIABLE_KEYS, SECTION_META, type SectionKey } from "@/lib/budget";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -544,4 +544,98 @@ export function buildCommentary(
   });
 
   return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catching up is not overspending. A payment against last month's arrears is
+// progress, and scoring it as this month's cost would punish exactly the thing
+// that gets you out. The month is judged on its own charges; the debt position
+// is tracked beside it, and moving in the right direction is the win.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ArrearsPosition {
+  /** Balance carried into this month. */
+  opening: number;
+  /** Of what has been paid, how much went against that balance. */
+  paidDown: number;
+  /** Opening less what has been cleared. */
+  remaining: number;
+  /** This month's charges still unpaid on lines that accrue — tomorrow's arrears. */
+  newThisMonth: number;
+  /** Where the balance lands if nothing else is paid. */
+  closing: number;
+  /** closing − opening. Negative is the direction you want. */
+  change: number;
+}
+
+/**
+ * Payments are applied to arrears first, because that is what catching up means:
+ * money goes to the oldest debt, and only what is left over counts against the
+ * current charge. Pay-to-use lines never contribute new arrears.
+ */
+export function arrearsPosition(monthEntries: (AdvisorEntry & { amountPaid: number; broughtForward?: number; paymentDate: Date | string | null; dueDate: Date | string })[]): ArrearsPosition {
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  let opening = 0, paidDown = 0, newThisMonth = 0;
+
+  for (const e of monthEntries) {
+    const section = sectionOf(e);
+    if (section === "income" || section === "liens") continue;
+    if ((VARIABLE_KEYS as readonly string[]).includes(section)) continue;
+
+    const bf = e.broughtForward ?? 0;
+    const paid = effectivePaid(e);
+    const toArrears = Math.min(paid, bf);
+    const toCharge = paid - toArrears;
+
+    opening  += bf;
+    paidDown += toArrears;
+    if (!isPayAsYouGo(e)) newThisMonth += Math.max(0, budgetAmount(e) - toCharge);
+  }
+
+  const remaining = r2(opening - paidDown);
+  const closing = r2(remaining + newThisMonth);
+  return {
+    opening: r2(opening), paidDown: r2(paidDown), remaining,
+    newThisMonth: r2(newThisMonth), closing, change: r2(closing - opening),
+  };
+}
+
+/**
+ * The catch-up verdict. Whether the hole is getting deeper is a different question
+ * from whether the month balances, and it is the one that says if the rotation is
+ * working — so it gets said separately, in those terms.
+ */
+export function arrearsComment(a: ArrearsPosition, income: number): Comment {
+  const M = (v: number) => "$" + Math.abs(v).toFixed(2);
+
+  if (a.opening === 0 && a.newThisMonth === 0) {
+    return {
+      heading: "Nothing carried, nothing accruing",
+      tone: "good",
+      body: "Every bill that accrues is square. There is no balance rolling into next month.",
+    };
+  }
+
+  if (a.change < 0) {
+    return {
+      heading: `Catching up — the balance is down ${M(a.change)}`,
+      tone: "good",
+      body: `Came in owing ${M(a.opening)} and ${M(a.paidDown)} of that is cleared. Even after this month's unpaid charges of `
+          + `${M(a.newThisMonth)}, the carried balance closes at ${M(a.closing)}. That is the rotation working: the hole is `
+          + `getting smaller, which is a different and better thing than the month simply balancing.`,
+    };
+  }
+
+  const monthsToClear = income > 0 && a.change > 0 ? null : null;
+  return {
+    heading: a.paidDown > 0
+      ? `Paid ${M(a.paidDown)} off, but the balance still grew ${M(a.change)}`
+      : `The carried balance is growing — up ${M(a.change)}`,
+    tone: "hard",
+    body: `Opened at ${M(a.opening)}${a.paidDown > 0 ? `, ${M(a.paidDown)} paid against it` : " with nothing paid against it yet"}, `
+        + `and ${M(a.newThisMonth)} of this month's own charges are unpaid — so it closes at ${M(a.closing)}. `
+        + `Rotating which bill waits only works while the total falls. This month it is rising, which means next month `
+        + `starts harder than this one did.`
+        + (monthsToClear ? "" : ""),
+  };
 }

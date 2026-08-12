@@ -5,7 +5,7 @@ import type { Expense } from "@/components/ExpenseTable";
 import {
   baselineMonths, buildBaseline, sectionBaselines, monthProgress,
   forecastEnvelopes, billOverruns, buildInsights,
-  affordability, applyAffordability, buildCommentary,
+  affordability, applyAffordability, buildCommentary, arrearsPosition, arrearsComment,
   type EnvelopeForecast, type Insight, type Comment,
 } from "@/lib/advisor";
 import { budgetAmount, sectionOf } from "@/lib/finance";
@@ -74,6 +74,9 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
     // month tightens every target and a strong one loosens them, with no input.
     const afford    = affordability(billsNow, incomeExpected, rawEnvelopes);
     const envelopes = applyAffordability(rawEnvelopes, afford, progress);
+    // Catching up is tracked beside the month, not inside it: billsNow is this
+    // month's charges only, so a payment against old debt never reads as overspend.
+    const arrears   = arrearsPosition(monthEntries);
 
     const projectedVariable = envelopes.reduce((s, e) => s + e.projected, 0);
     const projected = Math.round((billsNow + projectedVariable) * 100) / 100;
@@ -81,13 +84,14 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
     return {
       months, progress, envelopes, overruns, billsNow, projectedVariable, projected, afford,
       insights: buildInsights(envelopes, overruns, projected, incomeExpected, progress),
-      comments: buildCommentary(afford, envelopes, overruns, projected, progress),
+      arrears,
+      comments: [arrearsComment(arrears, incomeExpected), ...buildCommentary(afford, envelopes, overruns, projected, progress)],
       shortfall: Math.round((projected - incomeExpected) * 100) / 100,
     };
   }, [allExpenses, monthEntries, monthKey, now, incomeExpected]);
 
   if (!view || view.months.length === 0) return null;
-  const { progress, envelopes, insights, comments, afford, shortfall } = view;
+  const { progress, envelopes, insights, comments, afford, arrears, shortfall } = view;
   const ok = shortfall <= 0;
 
   return (
@@ -108,10 +112,14 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
           </span>
         </div>
         <p className="text-sm mt-2 leading-relaxed" style={{ color: WARM_GRAY }}>
-          Bills are {fmt(view.billsNow)} of {fmt(incomeExpected)}, leaving{" "}
+          This month&apos;s charges are {fmt(view.billsNow)} of {fmt(incomeExpected)}, leaving{" "}
           <strong style={{ color: afford.available < 0 ? MUTED_RED : OBSIDIAN, fontWeight: 500 }}>{fmt(afford.available)}</strong>{" "}
           for everything else. Spending is running at {fmt(view.projectedVariable)}, so the month lands near{" "}
           <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(view.projected)}</strong>.
+          {arrears.opening > 0 && (
+            <> Separately, {fmt(arrears.opening)} of arrears came in and {fmt(arrears.paidDown)} of it is cleared —
+            catching up is not counted against the month.</>
+          )}
         </p>
       </div>
 
