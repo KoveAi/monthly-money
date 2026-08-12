@@ -187,6 +187,10 @@ export interface EnvelopeForecast {
   /** What it usually costs — the baseline, or a weekly budget where one is set. */
   budget: number;
   budgetNote: string;
+  /** This envelope's share of whatever the income leaves after bills. */
+  affordable: number;
+  /** What it is actually measured against: the lower of budget and affordable. */
+  target: number;
   /** projected − budget when over, else 0. */
   overBy: number;
   state: TrackState;
@@ -249,7 +253,7 @@ export function forecastEnvelopes(
     return {
       key, label: SECTION_META[key].label, accent: SECTION_META[key].accent,
       spent: r2(spent), perDay: r2(spent / progress.daysGone), projected,
-      budget, budgetNote, overBy, state,
+      budget, budgetNote, affordable: budget, target: budget, overBy, state,
       protectedFromCuts: isProtected(key),
       cutPerWeek: r2(overBy / progress.weeks),
     };
@@ -320,8 +324,9 @@ export function buildInsights(
     out.push({
       headline: e.label + ": pull back " + money(e.cutPerWeek) + " a week",
       detail: money(e.spent) + " in " + progress.daysGone + " days is " + money(e.perDay)
-            + " a day — landing at " + money(e.projected) + " against " + money(e.budget)
-            + " (" + e.budgetNote + "). That is " + money(e.overBy) + " over.",
+            + " a day — landing at " + money(e.projected) + " against " + money(e.target)
+            + " (" + (e.target < e.budget ? "all the income leaves after bills" : e.budgetNote) + "). That is "
+            + money(e.overBy) + " over.",
       saving: e.overBy, tone: "cut",
     });
   }
@@ -353,6 +358,185 @@ export function buildInsights(
       saving: 0, tone: "good",
     });
   }
+
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Affordability. What you used to spend is history; what the month can carry is
+// arithmetic. Bills are committed, so everything left over is what there actually
+// is to spend — and when income moves, every envelope moves with it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface Affordability {
+  income: number;
+  /** Committed this month: every bill, excluding spending envelopes and balances. */
+  bills: number;
+  /** income − bills. Negative means the bills alone outrun the month. */
+  available: number;
+  /** What the envelopes would cost at their plan or usual pace. */
+  planned: number;
+  /** How far the plan exceeds what is available. */
+  squeeze: number;
+  /** Bills alone already exceed income — no allocation of spending can balance it. */
+  unfunded: boolean;
+}
+
+export function affordability(bills: number, income: number, envelopes: EnvelopeForecast[]): Affordability {
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const planned = envelopes.reduce((s, e) => s + e.budget, 0);
+  const available = r2(income - bills);
+  return {
+    income: r2(income), bills: r2(bills), available, planned: r2(planned),
+    squeeze: r2(Math.max(0, planned - Math.max(available, 0))),
+    unfunded: available <= 0,
+  };
+}
+
+/**
+ * Scale each envelope to what the month can actually carry. The plan is kept as the
+ * reference, but the target is never more than the income allows: a $160 week of
+ * groceries is not a budget if the bills already spent the money.
+ */
+export function applyAffordability(
+  envelopes: EnvelopeForecast[],
+  afford: Affordability,
+  progress: MonthProgress,
+): EnvelopeForecast[] {
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const pot = Math.max(afford.available, 0);
+  const planned = afford.planned;
+
+  return envelopes.map(e => {
+    const share = planned > 0 ? e.budget / planned : 0;
+    const affordable = r2(pot * share);
+    // When the bills already exceed income there is nothing to allocate, and scaling
+    // every envelope to zero would be advising no food. The plan stands as the target
+    // in that case; the commentary carries the harder message, which is that hitting
+    // every target still will not balance the month.
+    const target = afford.unfunded ? e.budget : Math.min(e.budget, affordable);
+    const overBy = r2(Math.max(0, e.projected - target));
+    const state: TrackState =
+      target <= 0                 ? "over"
+      : e.spent > target          ? "over"
+      : e.projected > target * 1.05 ? "heading-over"
+      : e.projected < target * 0.9  ? "under"
+      : "on-track";
+    // What a week has to come down by, over the weeks that are actually left.
+    const weeksLeft = Math.max((progress.daysIn - progress.daysGone) / 7, 0.5);
+    return { ...e, affordable, target, overBy, state, cutPerWeek: r2(overBy / weeksLeft) };
+  });
+}
+
+export interface Comment {
+  heading: string;
+  body: string;
+  tone: "hard" | "action" | "context" | "good";
+}
+
+/**
+ * The written assessment. Says where the month actually stands, what is driving it,
+ * what to do first, and — importantly — where the cuts run out, because advice that
+ * implies a solvable problem when there isn't one is worse than no advice.
+ */
+export function buildCommentary(
+  afford: Affordability,
+  envelopes: EnvelopeForecast[],
+  overruns: BillOverrun[],
+  projected: number,
+  progress: MonthProgress,
+): Comment[] {
+  const out: Comment[] = [];
+  const M = (v: number) => "$" + Math.abs(v).toFixed(2);
+  const shortfall = Math.round((projected - afford.income) * 100) / 100;
+  const cuttable = envelopes.filter(e => !e.protectedFromCuts).reduce((s, e) => s + e.overBy, 0)
+                 + overruns.filter(o => !isProtected(o.section)).reduce((s, o) => s + o.over, 0);
+  // Where the month lands if every envelope hits its target exactly — the best case
+  // that does not involve going without.
+  const onTarget = Math.round((afford.bills + envelopes.reduce((s, e) => s + e.target, 0)) * 100) / 100;
+  const residual = Math.round((onTarget - afford.income) * 100) / 100;
+  const weeksLeft = Math.max((progress.daysIn - progress.daysGone) / 7, 0);
+
+  // 1. Where the month stands, before any spending at all.
+  if (afford.available < 0) {
+    out.push({
+      heading: "The bills alone are more than the income",
+      tone: "hard",
+      body: `Committed bills come to ${M(afford.bills)} against ${M(afford.income)} of income — ${M(afford.available)} short `
+          + `before a single grocery run. Nothing in the spending envelopes can fix that, because there is nothing left to `
+          + `allocate: every dollar of food, fuel and incidental this month is unfunded. The gap has to close on the bills `
+          + `themselves or on income.`,
+    });
+  } else {
+    out.push({
+      heading: `${M(afford.available)} left after the bills`,
+      tone: afford.squeeze > 0 ? "action" : "good",
+      body: `Bills take ${M(afford.bills)} of ${M(afford.income)}, leaving ${M(afford.available)} for food, fuel and everything else. `
+          + (afford.squeeze > 0
+              ? `The usual pace of those would cost ${M(afford.planned)}, which is ${M(afford.squeeze)} more than there is — so the `
+              + `envelopes below are scaled to what the month can actually carry, not to what they normally run to.`
+              : `The usual pace of those comes to ${M(afford.planned)}, which fits.`),
+    });
+  }
+
+  // 2. Where it is heading, and whether cutting can get there.
+  if (shortfall > 0) {
+    const enough = residual <= 0;
+    out.push({
+      heading: enough
+        ? `Heading ${M(shortfall)} over — hitting every target closes it`
+        : `Heading ${M(shortfall)} over — ${M(residual)} of it cannot be cut away`,
+      tone: enough ? "action" : "hard",
+      body: `At ${progress.daysGone} days in, the month is tracking to ${M(projected)}. Holding every envelope to target `
+          + `saves ${M(Math.max(0, projected - onTarget))} and brings it to ${M(onTarget)}. `
+          + (enough
+              ? `That finishes inside the income, but only if it starts now — with ${weeksLeft.toFixed(1)} weeks left, each week of `
+              + `delay costs about ${M(shortfall / Math.max(weeksLeft, 1))}.`
+              : `That is still ${M(residual)} above the ${M(afford.income)} coming in. No amount of care with food and fuel closes `
+              + `that part — it sits in the bills or in the income, and pretending otherwise just moves the shortfall to next month.`),
+    });
+  } else {
+    out.push({
+      heading: "On course to finish within income",
+      tone: "good",
+      body: `Tracking to ${M(projected)} against ${M(afford.income)}. Holding the current pace finishes the month with ${M(-shortfall)} to spare.`,
+    });
+  }
+
+  // 3. The single biggest lever, named.
+  const worst = envelopes.filter(e => !e.protectedFromCuts && e.overBy > 0).sort((a, b) => b.overBy - a.overBy)[0];
+  if (worst) {
+    out.push({
+      heading: `${worst.label} is the biggest single lever`,
+      tone: "action",
+      body: `${M(worst.spent)} in ${progress.daysGone} days — ${M(worst.perDay)} a day — heading to ${M(worst.projected)} against a `
+          + `${M(worst.target)} target — ${M(worst.overBy)} over, more than any other line available. It is spending rather than a `
+          + `contract, so it can change this week: about ${M(worst.cutPerWeek)} a week for the rest of the month.`,
+    });
+  }
+
+  // 4. What income would have to be for this to work.
+  const needed = Math.round((projected) * 100) / 100;
+  if (shortfall > 0) {
+    out.push({
+      heading: `This month works at ${M(needed)} of income`,
+      tone: "context",
+      body: `That is ${M(shortfall)} above what is coming in. Income moves month to month, so this figure moves with it — when a `
+          + `stronger month lands, the envelopes widen automatically and the pressure comes off without changing anything here.`,
+    });
+  }
+
+  // 5. What is protected, stated once so it is never mistaken for an oversight.
+  const protectedSpend = overruns.filter(o => isProtected(o.section)).reduce((s, o) => s + o.over, 0);
+  out.push({
+    heading: "Marketing is not on the table",
+    tone: "context",
+    body: protectedSpend > 0
+      ? `It is running ${M(protectedSpend)} above its usual and is still left alone. It is what builds the business that fixes the `
+      + `income side, so cutting it to balance a month would be borrowing from the only line that changes the picture.`
+      : `It is never proposed as a cut. It builds the business that fixes the income side, so trimming it to balance a month would `
+      + `cost more than it saves.`,
+  });
 
   return out;
 }

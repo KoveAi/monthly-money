@@ -5,7 +5,8 @@ import type { Expense } from "@/components/ExpenseTable";
 import {
   baselineMonths, buildBaseline, sectionBaselines, monthProgress,
   forecastEnvelopes, billOverruns, buildInsights,
-  type EnvelopeForecast, type Insight,
+  affordability, applyAffordability, buildCommentary,
+  type EnvelopeForecast, type Insight, type Comment,
 } from "@/lib/advisor";
 import { budgetAmount, sectionOf } from "@/lib/finance";
 
@@ -32,6 +33,13 @@ const TRACK: Record<EnvelopeForecast["state"], { label: string; color: string; b
   under:          { label: "UNDER",        color: MUTED_GRN, bg: "#F2F8F5", border: "#B5D4C0" },
 };
 
+const COMMENT_TONE: Record<Comment["tone"], { color: string; bg: string; border: string }> = {
+  hard:    { color: MUTED_RED, bg: "#FDF8F8", border: "#D4B5B5" },
+  action:  { color: AMBER,     bg: "#FDFBF7", border: "#E4D8C4" },
+  context: { color: WARM_GRAY, bg: "#FAF9F6", border: BORDER },
+  good:    { color: MUTED_GRN, bg: "#F8FBF9", border: "#C6DCCD" },
+};
+
 const TONE: Record<Insight["tone"], { mark: string; color: string }> = {
   watch:     { mark: "▲", color: MUTED_RED },
   cut:       { mark: "◆", color: AMBER },
@@ -52,7 +60,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
     const baselines = buildBaseline(allExpenses, months);
     const sections  = sectionBaselines(allExpenses, months);
     const progress  = monthProgress(monthKey, now);
-    const envelopes = forecastEnvelopes(monthEntries, sections, progress);
+    const rawEnvelopes = forecastEnvelopes(monthEntries, sections, progress);
     const overruns  = billOverruns(monthEntries, baselines);
 
     // Bills are known the moment they are billed; only spending has to be projected.
@@ -62,18 +70,24 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       if (["groceries", "restaurants", "incidental", "fuel"].includes(sec)) return s;
       return s + budgetAmount(e);
     }, 0);
+    // Scale the envelopes to what this month's income can actually carry, so a lean
+    // month tightens every target and a strong one loosens them, with no input.
+    const afford    = affordability(billsNow, incomeExpected, rawEnvelopes);
+    const envelopes = applyAffordability(rawEnvelopes, afford, progress);
+
     const projectedVariable = envelopes.reduce((s, e) => s + e.projected, 0);
     const projected = Math.round((billsNow + projectedVariable) * 100) / 100;
 
     return {
-      months, progress, envelopes, overruns, billsNow, projectedVariable, projected,
+      months, progress, envelopes, overruns, billsNow, projectedVariable, projected, afford,
       insights: buildInsights(envelopes, overruns, projected, incomeExpected, progress),
+      comments: buildCommentary(afford, envelopes, overruns, projected, progress),
       shortfall: Math.round((projected - incomeExpected) * 100) / 100,
     };
   }, [allExpenses, monthEntries, monthKey, now, incomeExpected]);
 
   if (!view || view.months.length === 0) return null;
-  const { progress, envelopes, insights, shortfall } = view;
+  const { progress, envelopes, insights, comments, afford, shortfall } = view;
   const ok = shortfall <= 0;
 
   return (
@@ -94,15 +108,32 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
           </span>
         </div>
         <p className="text-sm mt-2 leading-relaxed" style={{ color: WARM_GRAY }}>
-          Bills are {fmt(view.billsNow)}. Spending is running at {fmt(view.projectedVariable)} for the month,
-          so this lands near <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(view.projected)}</strong> against{" "}
-          {fmt(incomeExpected)} of income.
+          Bills are {fmt(view.billsNow)} of {fmt(incomeExpected)}, leaving{" "}
+          <strong style={{ color: afford.available < 0 ? MUTED_RED : OBSIDIAN, fontWeight: 500 }}>{fmt(afford.available)}</strong>{" "}
+          for everything else. Spending is running at {fmt(view.projectedVariable)}, so the month lands near{" "}
+          <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(view.projected)}</strong>.
         </p>
+      </div>
+
+      {/* ── Comments: the written assessment ──────────────────────────────── */}
+      <div className="px-6 py-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+        <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>WHERE WE ARE</p>
+      </div>
+      <div className="px-6 py-5 grid gap-3 md:grid-cols-2" style={{ borderBottom: `1px solid ${BORDER}` }}>
+        {comments.map((c, i) => {
+          const t = COMMENT_TONE[c.tone];
+          return (
+            <div key={i} className="px-5 py-4" style={{ background: t.bg, border: `1px solid ${t.border}`, borderLeft: `2px solid ${t.color}` }}>
+              <p className="text-sm mb-1.5" style={{ color: t.color, fontWeight: 500 }}>{c.heading}</p>
+              <p className="text-xs leading-relaxed" style={{ color: WARM_GRAY }}>{c.body}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Envelope forecast ─────────────────────────────────────────────── */}
       <div className="grid px-6 py-2" style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: OBSIDIAN }}>
-        {["SPENDING", "SO FAR", "PER DAY", "HEADING TO", "BUDGET"].map((h, i) => (
+        {["SPENDING", "SO FAR", "PER DAY", "HEADING TO", "CAN AFFORD"].map((h, i) => (
           <p key={h} className="text-xs" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "0.14em", textAlign: i === 0 ? "left" : "right" }}>{h}</p>
         ))}
       </div>
@@ -128,8 +159,10 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
             <span className="text-xs font-mono text-right" style={{ color: "#BDBAB6" }}>{fmt(e.perDay)}</span>
             <span className="text-xs font-mono text-right" style={{ color: e.overBy > 0 ? MUTED_RED : OBSIDIAN }}>{fmt(e.projected)}</span>
             <div className="text-right">
-              <span className="text-xs font-mono" style={{ color: WARM_GRAY }}>{fmt(e.budget)}</span>
-              <span className="block text-xs" style={{ color: "#BDBAB6" }}>{e.budgetNote}</span>
+              <span className="text-xs font-mono" style={{ color: WARM_GRAY }}>{fmt(e.target)}</span>
+              <span className="block text-xs" style={{ color: "#BDBAB6" }}>
+                {e.target < e.budget ? `plan ${fmt(e.budget)} · ${e.budgetNote}` : e.budgetNote}
+              </span>
             </div>
           </div>
         );
