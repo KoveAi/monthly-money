@@ -8,7 +8,7 @@ import { TrimPlan } from "@/components/TrimPlan";
 import { baselineMonths, buildBaseline } from "@/lib/advisor";
 import { AdvisorPanel } from "@/components/AdvisorPanel";
 import { computeStatus } from "@/lib/status";
-import { effectivePaid, effectiveRemaining, budgetAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, budgetAmount, owedAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const OBSIDIAN   = "#111111";
@@ -323,6 +323,11 @@ export default function DashboardPage() {
   const advisorBaseline = useMemo(() => buildBaseline(allExpenses, advisorMonths), [allExpenses, advisorMonths]);
 
   // ── Stats ──────────────────────────────────────────────────────────────────
+  // Owed is the charge plus anything carried in. Every "due" figure on this page is
+  // owed, so that owed − paid = left over holds everywhere instead of only sometimes.
+  const owedOf    = (arr: Expense[]) => arr.reduce((s, e) => s + owedAmount(e), 0);
+  const carriedOf = (arr: Expense[]) => arr.reduce((s, e) => s + (e.broughtForward ?? 0), 0);
+
   const mDue  = monthly.reduce((s, e) => s + budgetAmount(e), 0);
   const mPaid = monthly.reduce((s, e) => s + effectivePaid(e), 0);
   const mRem  = monthly.reduce((s, e) => s + effectiveRemaining(e), 0);
@@ -370,6 +375,16 @@ export default function DashboardPage() {
   }).length;
   // "Unpaid" = anything with a balance still owed (not updated to paid, manually or auto).
   const unpaidCount = billExpenses.filter(e => effectiveRemaining(e) > 0).length;
+
+  const mOwed   = owedOf(monthly);
+  const grOwed  = owedOf(grBusiness);
+  const mktOwed = owedOf(marketing);
+  const aOwed   = owedOf(annual);
+  const billsOwed   = mOwed + grOwed + mktOwed + aOwed;
+  const billsPaid   = mPaid + grPaid + mktPaid + aPaid;
+  const billsLeft   = billsOwed - billsPaid;
+  const billsCharge = mDue + grDue + mktDue + aDue;
+  const billsCarried = carriedOf(monthly) + carriedOf(grBusiness) + carriedOf(marketing) + carriedOf(annual);
 
   const progressPct = (mDue + grDue + mktDue) > 0 ? ((mPaid + grPaid + mktPaid) / (mDue + grDue + mktDue)) * 100 : 0;
 
@@ -525,7 +540,7 @@ export default function DashboardPage() {
         <div className="max-w-screen-2xl mx-auto px-8 py-2.5 flex items-center gap-8">
           <span style={{ color: GOLD, letterSpacing: "0.18em", fontSize: 10 }}>MONTHLY</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-            Due <strong style={{ color: "#fff", fontWeight: 400 }}>{fmt(mDue + grDue + mktDue)}</strong>
+            Owed <strong style={{ color: "#fff", fontWeight: 400 }}>{fmt(mOwed + grOwed + mktOwed)}</strong>
           </span>
           <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
@@ -533,7 +548,7 @@ export default function DashboardPage() {
           </span>
           <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-            Remaining <strong style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400 }}>{fmt(mRem + grRem + mktRem)}</strong>
+            Left over <strong style={{ color: "rgba(255,255,255,0.75)", fontWeight: 400 }}>{fmt(mRem + grRem + mktRem)}</strong>
           </span>
         </div>
       </div>
@@ -603,9 +618,11 @@ export default function DashboardPage() {
             {/* Summary stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {[
-                { label: "Monthly Due",  value: fmt(mDue),           sub: `${monthly.length} items`,  accent: OBSIDIAN },
-                { label: "Total Paid",   value: fmt(mPaid + grPaid + mktPaid + aPaid + lPaid), sub: `${paidCount} fulfilled`,   accent: MUTED_GRN },
-                { label: "Remaining",    value: fmt(mRem),           sub: `of ${fmt(mDue)}`,          accent: WARM_GRAY },
+                { label: "Total Owed",   value: fmt(billsOwed),
+                  sub: billsCarried > 0 ? `${fmt(billsCharge)} charged + ${fmt(billsCarried)} carried in` : `${fmt(billsCharge)} charged`,
+                  accent: OBSIDIAN },
+                { label: "Paid",         value: fmt(billsPaid),      sub: `${paidCount} fulfilled`,   accent: MUTED_GRN },
+                { label: "Left Over",    value: fmt(billsLeft),      sub: `of ${fmt(billsOwed)} owed`, accent: billsLeft > 0 ? AMBER : MUTED_GRN },
                 { label: "Past Due",     value: String(pastDueCount),sub: "require attention",        accent: pastDueCount > 0 ? MUTED_RED : WARM_GRAY },
               ].map(c => (
                 <div key={c.label} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `2px solid ${c.accent}` }} className="p-5">
@@ -741,9 +758,9 @@ export default function DashboardPage() {
                 </form>
               )}
               <MiniStats items={[
-                { label: "DUE", value: fmt(mDue) },
+                { label: "OWED", value: fmt(mOwed) },
                 { label: "PAID", value: fmt(mPaid), positive: true },
-                { label: "REMAINING", value: fmt(mRem), negative: mRem > 0 },
+                { label: "LEFT OVER", value: fmt(mRem), negative: mRem > 0 },
               ]} />
               {openMonthly && (
                 <div className="mb-3 flex items-center gap-2">
@@ -814,9 +831,9 @@ export default function DashboardPage() {
                 </form>
               )}
               <MiniStats items={[
-                { label: "DUE", value: fmt(grDue) },
+                { label: "OWED", value: fmt(grOwed) },
                 { label: "PAID", value: fmt(grPaid), positive: true },
-                { label: "REMAINING", value: fmt(grRem), negative: grRem > 0 },
+                { label: "LEFT OVER", value: fmt(grRem), negative: grRem > 0 },
               ]} />
               {openGR && (
                 <div className="mb-3 flex items-center gap-2">
@@ -880,9 +897,9 @@ export default function DashboardPage() {
                 </form>
               )}
               <MiniStats items={[
-                { label: "DUE", value: fmt(mktDue) },
+                { label: "OWED", value: fmt(mktOwed) },
                 { label: "PAID", value: fmt(mktPaid), positive: true },
-                { label: "REMAINING", value: fmt(mktRem), negative: mktRem > 0 },
+                { label: "LEFT OVER", value: fmt(mktRem), negative: mktRem > 0 },
               ]} />
               {openMarketing && (
                 <div className="mb-3 flex items-center gap-2">
@@ -945,9 +962,9 @@ export default function DashboardPage() {
                 </form>
               )}
               <MiniStats items={[
-                { label: "DUE", value: fmt(aDue) },
+                { label: "OWED", value: fmt(aOwed) },
                 { label: "PAID", value: fmt(aPaid), positive: true },
-                { label: "REMAINING", value: fmt(aRem), negative: aRem > 0 },
+                { label: "LEFT OVER", value: fmt(aRem), negative: aRem > 0 },
               ]} />
               {openAnnual && (
                 <div className="mb-3 flex items-center gap-2">
