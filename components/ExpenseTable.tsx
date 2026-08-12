@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { computeStatus, ALL_STATUSES } from "@/lib/status";
-import { effectivePaid, effectiveRemaining, owedAmount, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, owedAmount, isPayAsYouGo, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
 import { verdictFor, type Baseline } from "@/lib/advisor";
 
 export interface Expense {
@@ -518,10 +518,13 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                       )}
                     </td>
 
-                    {/* Brought forward — editable, so arrears can be entered directly */}
-                    <td className="px-3 py-2.5 text-right cursor-pointer" style={{ borderRight: `1px solid ${BORDER}` }}
-                      onClick={() => !isInline && startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0))}>
-                      {isInline && inlineField === "broughtForward" ? (
+                    {/* Brought forward — editable, so arrears can be entered directly.
+                        Pay-to-use lines never carry, so there is nothing to enter. */}
+                    <td className="px-3 py-2.5 text-right" style={{ borderRight: `1px solid ${BORDER}`, cursor: isPayAsYouGo(expense) ? "default" : "pointer" }}
+                      onClick={() => !isInline && !isPayAsYouGo(expense) && startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0))}>
+                      {isPayAsYouGo(expense) ? (
+                        <span className="text-xs" style={{ color: "#C8C4BF", letterSpacing: "0.04em" }}>pay to use</span>
+                      ) : isInline && inlineField === "broughtForward" ? (
                         <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
                           onChange={e => setInlineValue(e.target.value)}
                           onBlur={() => commitInline(expense)}

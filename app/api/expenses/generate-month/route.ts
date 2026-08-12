@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { effectiveRemaining } from "@/lib/finance";
+import { rollingRemaining } from "@/lib/finance";
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       : [];
 
     const lienCarry = lienTemplate
-      .map(e => ({ e, remaining: effectiveRemaining(e) }))
+      .map(e => ({ e, remaining: rollingRemaining(e) }))
       .filter(x => x.remaining > 0);
 
     if (monthlyTemplate.length === 0 && annualDue.length === 0 && lienCarry.length === 0) {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         data: {
           description: e.description,
           amount: e.amount,
-          broughtForward: effectiveRemaining(e),
+          broughtForward: rollingRemaining(e),
           amountPaid: 0,
           category: e.category,
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, safeDay)),
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         data: {
           description: e.description,
           amount: e.amount,
-          broughtForward: effectiveRemaining(e),
+          broughtForward: rollingRemaining(e),
           amountPaid: 0,
           category: e.category,
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, origDay)),
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     const created = await prisma.$transaction([...monthlyRows, ...annualRows, ...lienRows]);
 
     const carried = lienCarry.reduce((s, x) => s + x.remaining, 0);
-    const broughtOver = [...monthlyTemplate, ...annualDue].reduce((t, e) => t + effectiveRemaining(e), 0);
+    const broughtOver = [...monthlyTemplate, ...annualDue].reduce((t, e) => t + rollingRemaining(e), 0);
     const lienNote = lienRows.length > 0
       ? ` + ${lienRows.length} obligation balance${lienRows.length === 1 ? "" : "s"} ($${carried.toFixed(2)} outstanding)`
       : "";
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       monthKey: targetMonthKey,
       monthly: monthlyTemplate.length,
       annual: annualDue.length,
-      carriedForward: monthlyTemplate.reduce((t, e) => t + effectiveRemaining(e), 0),
+      carriedForward: monthlyTemplate.reduce((t, e) => t + rollingRemaining(e), 0),
       liens: lienRows.length,
       lienBalance: carried,
       total: created.length,

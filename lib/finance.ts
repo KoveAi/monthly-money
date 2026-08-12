@@ -66,6 +66,30 @@ export const isPaused = (e: { status: string | null }) => e.status === "Paused";
 export const budgetAmount = (e: { status: string | null; amount: number }) =>
   isPaused(e) ? 0 : e.amount;
 
+/**
+ * Business lines that behave like ordinary bills: miss one and you still owe it.
+ * Everything else in Business, and everything in Marketing, is pay-to-use — a
+ * subscription you either pay to keep using or lose access to. Nothing accrues.
+ */
+export const ACCRUING_BUSINESS = ["the bold building", "microsoft business 365", "hspo"];
+
+/**
+ * Pay-to-use: the charge buys the month, so an unpaid one is simply a month not
+ * bought. It never becomes a debt and never rolls into the next month.
+ */
+export function isPayAsYouGo(e: Classifiable): boolean {
+  const section = sectionOf(e);
+  if (section === "marketing") return true;
+  if (section !== "business") return false;
+  const name = e.description.toLowerCase();
+  return !ACCRUING_BUSINESS.some(k => name.includes(k));
+}
+
+/** What actually rolls into next month — nothing, for a pay-to-use line. */
+export function rollingRemaining(e: Settleable & Classifiable & { status: string | null }): number {
+  return isPayAsYouGo(e) ? 0 : effectiveRemaining(e);
+}
+
 /** Minimum shape needed to route an entry into its ledger section. */
 export interface Classifiable {
   description: string;
