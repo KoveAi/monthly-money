@@ -12,6 +12,8 @@ model Expense {
   description    String
   amount         Float
   amountPaid     Float     @default(0)
+  // Unpaid balance rolled in from the previous month.
+  broughtForward Float     @default(0)
   category       String
   dueDate        DateTime
   isRecurring    Boolean   @default(false)

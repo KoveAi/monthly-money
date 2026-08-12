@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 3. Create monthly copies (preserve original due day) ───────────────
+    // The charge stays the charge; anything left unpaid last month rides alongside
+    // it as broughtForward rather than being folded into the amount, so next
+    // month's bill never inherits a compounding figure.
     const monthlyRows = monthlyTemplate.map(e => {
       const origDay = new Date(e.dueDate).getUTCDate();
       const safeDay = Math.min(origDay, new Date(targetYear, targetMonth, 0).getDate());
@@ -74,6 +77,7 @@ export async function POST(request: NextRequest) {
         data: {
           description: e.description,
           amount: e.amount,
+          broughtForward: effectiveRemaining(e),
           amountPaid: 0,
           category: e.category,
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, safeDay)),
@@ -92,6 +96,7 @@ export async function POST(request: NextRequest) {
         data: {
           description: e.description,
           amount: e.amount,
+          broughtForward: effectiveRemaining(e),
           amountPaid: 0,
           category: e.category,
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, origDay)),
@@ -129,6 +134,7 @@ export async function POST(request: NextRequest) {
     const created = await prisma.$transaction([...monthlyRows, ...annualRows, ...lienRows]);
 
     const carried = lienCarry.reduce((s, x) => s + x.remaining, 0);
+    const broughtOver = [...monthlyTemplate, ...annualDue].reduce((t, e) => t + effectiveRemaining(e), 0);
     const lienNote = lienRows.length > 0
       ? ` + ${lienRows.length} obligation balance${lienRows.length === 1 ? "" : "s"} ($${carried.toFixed(2)} outstanding)`
       : "";
@@ -138,10 +144,12 @@ export async function POST(request: NextRequest) {
       monthKey: targetMonthKey,
       monthly: monthlyTemplate.length,
       annual: annualDue.length,
+      carriedForward: monthlyTemplate.reduce((t, e) => t + effectiveRemaining(e), 0),
       liens: lienRows.length,
       lienBalance: carried,
       total: created.length,
-      message: `Generated ${monthlyTemplate.length} monthly + ${annualDue.length} annual${lienNote} = ${created.length} entries for ${targetMonthKey}`,
+      message: `Generated ${monthlyTemplate.length} monthly + ${annualDue.length} annual${lienNote} = ${created.length} entries for ${targetMonthKey}`
+             + (broughtOver > 0 ? ` · $${broughtOver.toFixed(2)} of unpaid balances carried forward` : ""),
     });
   } catch (error) {
     console.error("generate-month error:", error);

@@ -15,6 +15,7 @@ export async function PUT(
     if ("description" in body) updateData.description = body.description;
     if ("amount" in body) updateData.amount = parseFloat(body.amount);
     if ("amountPaid" in body) updateData.amountPaid = parseFloat(body.amountPaid);
+    if ("broughtForward" in body) updateData.broughtForward = parseFloat(body.broughtForward) || 0;
     if ("category" in body) updateData.category = body.category;
     if ("dueDate" in body) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : undefined;
     if ("isRecurring" in body) updateData.isRecurring = body.isRecurring;

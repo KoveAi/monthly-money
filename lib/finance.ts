@@ -10,6 +10,8 @@ import { computeStatus } from "@/lib/status";
 export interface Settleable {
   amount: number;
   amountPaid: number;
+  /** Unpaid balance carried in from last month. Absent on older records. */
+  broughtForward?: number;
   status: string | null;
   paymentDate: Date | string | null;
   dueDate: Date | string;
@@ -32,9 +34,21 @@ export function effectivePaid(e: Settleable): number {
   return st === "Paid" ? e.amount : 0;
 }
 
-/** Outstanding balance still owed (never negative). */
-export function effectiveRemaining(e: Settleable): number {
-  return isPaused(e) ? 0 : Math.max(0, e.amount - effectivePaid(e));
+/**
+ * What is actually owed right now: this month's charge plus anything that went
+ * unpaid last month and rolled in. This is the figure a payment is measured
+ * against — the bare charge understates a bill you are behind on.
+ */
+export function owedAmount(e: Settleable & { status: string | null }): number {
+  return isPaused(e) ? 0 : e.amount + (e.broughtForward ?? 0);
+}
+
+/**
+ * Left over after this month's payment — the amount that rolls into next month.
+ * Never negative: overpaying clears the line, it does not create credit.
+ */
+export function effectiveRemaining(e: Settleable & { status: string | null }): number {
+  return isPaused(e) ? 0 : Math.max(0, owedAmount(e) - effectivePaid(e));
 }
 
 /**

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { computeStatus, ALL_STATUSES } from "@/lib/status";
-import { effectivePaid, effectiveRemaining, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, owedAmount, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
 import { verdictFor, type Baseline } from "@/lib/advisor";
 
 export interface Expense {
@@ -11,6 +11,8 @@ export interface Expense {
   description: string;
   amount: number;
   amountPaid: number;
+  /** Unpaid balance rolled in from last month. */
+  broughtForward?: number;
   category: string;
   dueDate: string;
   isRecurring: boolean;
@@ -327,6 +329,8 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
   const filtered = filterStatus === "All" ? expenses : expenses.filter(e => getStatus(e) === filterStatus);
 
   const totalAmount    = filtered.reduce((s, e) => s + e.amount, 0);
+  const totalBrought   = filtered.reduce((s, e) => s + (e.broughtForward ?? 0), 0);
+  const totalOwed      = filtered.reduce((s, e) => s + owedAmount(e), 0);
   const totalPaid      = filtered.reduce((s, e) => s + effectivePaid(e), 0);
   const totalRemaining = filtered.reduce((s, e) => s + effectiveRemaining(e), 0);
 
@@ -348,6 +352,9 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
     } else if (inlineField === "amount") {
       const v = parseFloat(inlineValue.replace(/[^0-9.]/g, ""));
       if (!isNaN(v)) update = { amount: v };
+    } else if (inlineField === "broughtForward") {
+      const v = parseFloat(inlineValue.replace(/[^0-9.]/g, ""));
+      if (!isNaN(v)) update = { broughtForward: v };
     } else if (inlineField === "description") {
       if (inlineValue.trim()) update = { description: inlineValue.trim() };
     } else if (inlineField === "category") {
@@ -400,9 +407,9 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
           {filtered.length > 0 && (
             <div className="p-4 mt-2" style={{ background: headerColor }}>
               <div className="grid grid-cols-3 text-center" style={{ color: headerTextColor ?? "#fff" }}>
-                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>DUE</p><p className="font-mono text-sm">{fmt(totalAmount)}</p></div>
+                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>OWED</p><p className="font-mono text-sm">{fmt(totalOwed)}</p></div>
                 <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>PAID</p><p className="font-mono text-sm">{fmt(totalPaid)}</p></div>
-                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>REMAINING</p><p className="font-mono text-sm">{fmt(totalRemaining)}</p></div>
+                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>LEFT OVER</p><p className="font-mono text-sm">{fmt(totalRemaining)}</p></div>
               </div>
             </div>
           )}
@@ -413,9 +420,9 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr style={{ background: headerColor }}>
-                {["Expense", "Category", "Due Date", "Amount Due", "Amount Paid", "Remaining", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
+                {["Expense", "Category", "Due Date", "Charge", "Brought Fwd", "Owed", "Paid", "Left Over", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
                   <th key={i} className="px-3 py-3"
-                    style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 5 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
+                    style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 7 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
                     {h}
                   </th>
                 ))}
@@ -423,7 +430,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={baseline ? 10 : 9} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
+                <tr><td colSpan={baseline ? 12 : 11} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
               )}
               {filtered.map((expense) => {
                 const status    = getStatus(expense);
@@ -509,6 +516,27 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                           {saving === expense.id && inlineField === "amount" ? "…" : fmt(expense.amount)}
                         </span>
                       )}
+                    </td>
+
+                    {/* Brought forward — editable, so arrears can be entered directly */}
+                    <td className="px-3 py-2.5 text-right cursor-pointer" style={{ borderRight: `1px solid ${BORDER}` }}
+                      onClick={() => !isInline && startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0))}>
+                      {isInline && inlineField === "broughtForward" ? (
+                        <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
+                          onChange={e => setInlineValue(e.target.value)}
+                          onBlur={() => commitInline(expense)}
+                          onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
+                          className="text-right" style={{ width: 90, fontSize: 12 }} />
+                      ) : (
+                        <span className="font-mono text-xs" style={{ color: (expense.broughtForward ?? 0) > 0 ? MUTED_RED : "#C8C4BF" }}>
+                          {(expense.broughtForward ?? 0) > 0 ? fmt(expense.broughtForward ?? 0) : "—"}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Owed — charge plus what rolled in. Read only: it is the sum of the two. */}
+                    <td className="px-3 py-2.5 text-right font-mono text-xs" style={{ borderRight: `1px solid ${BORDER}`, color: OBSIDIAN, fontWeight: 500 }}>
+                      {fmt(owedAmount(expense))}
                     </td>
 
                     {/* Amount Paid */}
@@ -611,9 +639,11 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                     {filtered.length} item{filtered.length !== 1 ? "s" : ""}
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalAmount)}</td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: headerTextColor ?? "rgba(255,255,255,0.65)", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalBrought)}</td>
+                  <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalOwed)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ? "#15803d" : "#86efac", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalPaid)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalRemaining)}</td>
-                  <td colSpan={baseline ? 4 : 3} />
+                  <td colSpan={baseline ? 5 : 4} />
                 </tr>
               </tfoot>
             )}
