@@ -85,7 +85,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       months, progress, envelopes, overruns, billsNow, projectedVariable, projected, afford,
       insights: buildInsights(envelopes, overruns, projected, incomeExpected, progress),
       arrears,
-      comments: [arrearsComment(arrears, incomeExpected), ...buildCommentary(afford, envelopes, overruns, projected, progress)],
+      comments: [arrearsComment(arrears, progress), ...buildCommentary(afford, envelopes, overruns, projected, progress)],
       shortfall: Math.round((projected - incomeExpected) * 100) / 100,
     };
   }, [allExpenses, monthEntries, monthKey, now, incomeExpected]);

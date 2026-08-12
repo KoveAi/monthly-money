@@ -605,7 +605,7 @@ export function arrearsPosition(monthEntries: (AdvisorEntry & { amountPaid: numb
  * from whether the month balances, and it is the one that says if the rotation is
  * working — so it gets said separately, in those terms.
  */
-export function arrearsComment(a: ArrearsPosition, income: number): Comment {
+export function arrearsComment(a: ArrearsPosition, progress: MonthProgress): Comment {
   const M = (v: number) => "$" + Math.abs(v).toFixed(2);
 
   if (a.opening === 0 && a.newThisMonth === 0) {
@@ -616,26 +616,47 @@ export function arrearsComment(a: ArrearsPosition, income: number): Comment {
     };
   }
 
-  if (a.change < 0) {
+  // Mid-month, most of this month's charges are simply not due yet. Counting them
+  // as a growing balance would cry wolf on the 12th of every month, so while the
+  // month is running the verdict is about the old debt only, and what is still to
+  // pay is reported as what it is: the rest of the month.
+  if (progress.inProgress) {
+    const daysLeft = progress.daysIn - progress.daysGone;
+    if (a.paidDown > 0) {
+      return {
+        heading: `Caught up ${M(a.paidDown)} so far — ${M(a.remaining)} of old debt left`,
+        tone: a.remaining === 0 ? "good" : "action",
+        body: `Came in owing ${M(a.opening)} from last month and ${M(a.paidDown)} of it is cleared. Separately, ${M(a.newThisMonth)} `
+            + `of this month's own charges are still to pay with ${daysLeft} days left — normal at this point in the month, but `
+            + `whatever is still unpaid on the 31st joins the balance and starts September.`,
+      };
+    }
     return {
-      heading: `Catching up — the balance is down ${M(a.change)}`,
-      tone: "good",
-      body: `Came in owing ${M(a.opening)} and ${M(a.paidDown)} of that is cleared. Even after this month's unpaid charges of `
-          + `${M(a.newThisMonth)}, the carried balance closes at ${M(a.closing)}. That is the rotation working: the hole is `
-          + `getting smaller, which is a different and better thing than the month simply balancing.`,
+      heading: `${M(a.opening)} of old debt, nothing paid against it yet`,
+      tone: "action",
+      body: `Last month's balance is untouched, and ${M(a.newThisMonth)} of this month's charges are still to pay with ${daysLeft} `
+          + `days left. Anything unpaid at month end joins the balance — the rotation only works while that total falls.`,
     };
   }
 
-  const monthsToClear = income > 0 && a.change > 0 ? null : null;
+  if (a.change < 0) {
+    return {
+      heading: `Catching up — the balance fell ${M(a.change)}`,
+      tone: "good",
+      body: `Came in owing ${M(a.opening)} and ${M(a.paidDown)} of that was cleared. Even after this month's unpaid charges of `
+          + `${M(a.newThisMonth)}, the carried balance closed at ${M(a.closing)}. That is the rotation working: the hole got `
+          + `smaller, which is a different and better thing than the month merely balancing.`,
+    };
+  }
+
   return {
     heading: a.paidDown > 0
       ? `Paid ${M(a.paidDown)} off, but the balance still grew ${M(a.change)}`
-      : `The carried balance is growing — up ${M(a.change)}`,
+      : `The carried balance grew ${M(a.change)}`,
     tone: "hard",
-    body: `Opened at ${M(a.opening)}${a.paidDown > 0 ? `, ${M(a.paidDown)} paid against it` : " with nothing paid against it yet"}, `
-        + `and ${M(a.newThisMonth)} of this month's own charges are unpaid — so it closes at ${M(a.closing)}. `
-        + `Rotating which bill waits only works while the total falls. This month it is rising, which means next month `
-        + `starts harder than this one did.`
-        + (monthsToClear ? "" : ""),
+    body: `Opened at ${M(a.opening)}${a.paidDown > 0 ? `, ${M(a.paidDown)} paid against it` : " with nothing paid against it"}, `
+        + `and ${M(a.newThisMonth)} of this month's charges went unpaid — so it closed at ${M(a.closing)}. `
+        + `Rotating which bill waits only works while the total falls. It rose, which means next month starts harder `
+        + `than this one did.`,
   };
 }
