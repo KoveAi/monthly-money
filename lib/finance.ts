@@ -71,7 +71,10 @@ export const budgetAmount = (e: { status: string | null; amount: number }) =>
  * Everything else in Business, and everything in Marketing, is pay-to-use — a
  * subscription you either pay to keep using or lose access to. Nothing accrues.
  */
-export const ACCRUING_BUSINESS = ["the bold building", "microsoft business 365", "hspo"];
+// "apple card" also catches the MacBook payment plan, which is the same kind of
+// thing: a card balance, not a subscription. Note it does not catch "Apple Bill",
+// which is genuine pay-to-use.
+export const ACCRUING_BUSINESS = ["the bold building", "microsoft business 365", "hspo", "apple card"];
 
 /**
  * Pay-to-use: the charge buys the month, so an unpaid one is simply a month not
