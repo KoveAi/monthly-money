@@ -19,7 +19,7 @@ const STORE_KEY = "mm-trim-plan-v1";
 /** The planner's store — targets are written here so both tabs stay in step. */
 const PLAN_KEY  = "mm-budget-plan-v1";
 
-const TIER_ORDER: Tier[] = ["discretionary", "negotiable", "variable", "locked"];
+const TIER_ORDER: Tier[] = ["discretionary", "negotiable", "variable", "business", "locked"];
 
 function fmt(v: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
@@ -191,7 +191,7 @@ export function TrimPlan({ allExpenses, monthKey, incomeExpected }: { allExpense
 
       {/* ── Tiers ─────────────────────────────────────────────────────────── */}
       {TIER_ORDER.map(tier => {
-        const rows = result.items.filter(i => i.tier === tier && (showKept || i.action !== "keep" || tier === "locked"));
+        const rows = result.items.filter(i => i.tier === tier && (showKept || i.action !== "keep" || tier === "locked" || tier === "business"));
         if (rows.length === 0) return null;
         const meta = TIER_META[tier];
         const now = rows.reduce((s, i) => s + i.current, 0);

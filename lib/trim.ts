@@ -19,13 +19,14 @@ export type TrimEntry = Classifiable & Settleable & { id: string; monthKey: stri
  *   discretionary — a subscription. Cancelling it costs nothing but the thing itself.
  *   variable      — behaviour, not a contract. Groceries, dining, fuel, incidental.
  */
-export type Tier = "locked" | "negotiable" | "discretionary" | "variable";
+export type Tier = "locked" | "negotiable" | "discretionary" | "variable" | "business";
 
 export const TIER_META: Record<Tier, { label: string; blurb: string; accent: string }> = {
   locked:        { label: "Locked",        blurb: "Obligations you cannot simply cancel",     accent: "#111111" },
   negotiable:    { label: "Negotiable",    blurb: "Services with real alternatives",          accent: "#8B5E2A" },
   discretionary: { label: "Discretionary", blurb: "Subscriptions — cancellable today",        accent: "#8B5E7A" },
   variable:      { label: "Variable",      blurb: "Spending habits, not contracts",           accent: "#4A7C59" },
+  business:      { label: "Business",      blurb: "The practice and the ventures — not on the table", accent: "#8B5E7A" },
 };
 
 const has = (hay: string, needles: string[]) => needles.some(n => hay.includes(n));
@@ -58,10 +59,12 @@ const DORMANT = ["cancelled", "canceled", "account closed", "on hold", "paid off
 export function classify(e: Classifiable): Tier {
   const section = sectionOf(e);
   if ((VARIABLE_KEYS as readonly string[]).includes(section)) return "variable";
+  // The business before anything else: a tool the practice runs on is not a
+  // household subscription, however much it looks like one from the outside.
+  if (section === "business" || section === "marketing") return "business";
   const hay = `${e.description} ${e.category}`.toLowerCase();
   if (has(hay, LOCKED)) return "locked";
   if (has(hay, NEGOTIABLE)) return "negotiable";
-  if (section === "business" || section === "marketing") return "discretionary";
   return has(hay, ["netflix", "prime", "storage", "app", "wellness", "salon", "proactive"]) ? "discretionary" : "locked";
 }
 
@@ -211,6 +214,7 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
   // Lower rank = suggest first. Nothing here forces a cut; it only sets the order.
   const rank = (i: TrimItem) =>
     i.kept                       ? 99
+    : i.tier === "business"      ? 99
     : i.dormant                  ? 0
     : i.duplicate                ? 1
     : i.overlapGroup && i.tier === "discretionary" ? 2
@@ -236,6 +240,7 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
     i.suggested = i.current;
     i.action = "keep";
     if (i.kept && i.keptWhy) i.reasons.push(`kept — ${i.keptWhy}`);
+    else if (i.tier === "business") i.reasons.push("the business — not proposed as a cut");
 
     if (gap >= 0 || rank(i) === 99) continue;
 

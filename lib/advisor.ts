@@ -147,11 +147,12 @@ export function summarise(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Sections the advisor will never propose cutting. Marketing runs the business
- * being built — trimming it to balance a month would cost more than it saves — so
- * it is reported for visibility and then left alone.
+ * Sections the advisor will never propose cutting. Business and Marketing are the
+ * wife's practice and the ventures being built — they are the income side, not a
+ * household indulgence, and a tool the business runs on is not a saving whatever
+ * its price. Both are reported for visibility and then left alone.
  */
-export const PROTECTED_SECTIONS: SectionKey[] = ["marketing"];
+export const PROTECTED_SECTIONS: SectionKey[] = ["marketing", "business"];
 export const isProtected = (s: SectionKey) => PROTECTED_SECTIONS.includes(s);
 
 /** Lines run to a weekly figure rather than a monthly one. Keyed by lineKey. */
@@ -351,7 +352,7 @@ export function buildInsights(
   if (protectedOver.length || protectedBills.length) {
     const total = protectedOver.reduce((s, e) => s + e.overBy, 0) + protectedBills.reduce((s, b) => s + b.over, 0);
     out.push({
-      headline: "Marketing is up " + money(total) + " — left alone",
+      headline: "The business is up " + money(total) + " — left alone",
       detail: "Marketing runs the business being built, so it is never proposed as a cut. It is shown here only so the number is not a surprise.",
       saving: 0, tone: "protected",
     });
@@ -536,7 +537,7 @@ export function buildCommentary(
   // 5. What is protected, stated once so it is never mistaken for an oversight.
   const protectedSpend = overruns.filter(o => isProtected(o.section)).reduce((s, o) => s + o.over, 0);
   out.push({
-    heading: "Marketing is not on the table",
+    heading: "The business is not on the table",
     tone: "context",
     body: protectedSpend > 0
       ? `It is running ${M(protectedSpend)} above its usual and is still left alone. It is what builds the business that fixes the `
