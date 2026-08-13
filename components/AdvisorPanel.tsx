@@ -109,7 +109,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
     <div className="mb-8" style={{ border: `1px solid ${BORDER}`, background: SURFACE }}>
 
       {/* ── Verdict ───────────────────────────────────────────────────────── */}
-      <div className="px-6 py-5" style={{
+      <div className="px-4 md:px-6 py-5" style={{
         background: ok ? "#F8FBF9" : "#FDF8F8",
         borderBottom: `1px solid ${BORDER}`,
         borderLeft: `2px solid ${ok ? MUTED_GRN : MUTED_RED}`,
@@ -135,10 +135,10 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       </div>
 
       {/* ── Comments: the written assessment ──────────────────────────────── */}
-      <div className="px-6 py-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+      <div className="px-4 md:px-6 py-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
         <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>WHERE WE ARE</p>
       </div>
-      <div className="px-6 py-5 grid gap-3 md:grid-cols-2" style={{ borderBottom: `1px solid ${BORDER}` }}>
+      <div className="px-4 md:px-6 py-5 grid gap-3 md:grid-cols-2" style={{ borderBottom: `1px solid ${BORDER}` }}>
         {comments.map((c, i) => {
           const t = COMMENT_TONE[c.tone];
           return (
@@ -151,7 +151,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       </div>
 
       {/* ── Where the money goes ──────────────────────────────────────────── */}
-      <div className="px-6 py-3 flex flex-wrap items-baseline gap-x-4" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+      <div className="px-4 md:px-6 py-3 flex flex-wrap items-baseline gap-x-4 gap-y-1" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
         <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>WHERE THE MONEY GOES</p>
         <span className="text-xs" style={{ color: structure.ratio > 1 ? MUTED_RED : MUTED_GRN, letterSpacing: "0.06em" }}>
           {fmt(structure.total)} of spending against {fmt(structure.income)} of income —{" "}
@@ -170,9 +170,9 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
         return (
         <div key={r.name} style={{ borderBottom: `1px solid ${BORDER}` }}>
         <button onClick={() => setOpenGroup(open ? null : r.name)}
-          className="w-full grid items-center px-6 py-3 text-left hover:opacity-80 transition-opacity"
+          className="w-full flex flex-wrap md:grid items-center gap-y-1 px-4 md:px-6 py-3 text-left hover:opacity-80 transition-opacity"
           style={{ gridTemplateColumns: "1fr 120px 90px 1fr", background: i % 2 ? IVORY : SURFACE }}>
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 w-full md:w-auto">
             <span style={{ color: GOLD, fontSize: 9, width: 8 }}>{open ? "▾" : "▸"}</span>
             <span className="text-xs" style={{ color: OBSIDIAN, letterSpacing: "0.08em" }}>{r.name.toUpperCase()}</span>
             <span className="text-xs" style={{ color: "#BDBAB6" }}>{r.lines} {r.lines === 1 ? "line" : "lines"}</span>
@@ -182,11 +182,11 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
               </span>
             )}
           </div>
-          <span className="text-xs font-mono text-right" style={{ color: OBSIDIAN }}>{fmt(r.amount)}</span>
-          <span className="text-xs font-mono text-right" style={{ color: r.overBenchmark ? MUTED_RED : WARM_GRAY }}>
-            {Math.round(r.share * 100)}%
+          <span className="text-xs font-mono md:text-right pl-5 md:pl-0" style={{ color: OBSIDIAN }}>{fmt(r.amount)}</span>
+          <span className="text-xs font-mono md:text-right ml-3 md:ml-0" style={{ color: r.overBenchmark ? MUTED_RED : WARM_GRAY }}>
+            {Math.round(r.share * 100)}%<span className="md:hidden"> of income</span>
           </span>
-          <div className="pl-5 flex items-center gap-3">
+          <div className="hidden md:flex pl-5 items-center gap-3">
             <div className="flex-1 h-1.5" style={{ background: BORDER }}>
               <div className="h-1.5" style={{ width: `${Math.min(r.share * 100, 100)}%`, background: r.overBenchmark ? MUTED_RED : r.name === "Business & marketing" ? "#8B5E7A" : GOLD }} />
             </div>
@@ -199,23 +199,23 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
         {open && (
           <div style={{ background: "#FCFBF9", borderTop: `1px solid ${BORDER}` }}>
             {r.items.map((it, n) => (
-              <div key={it.description + n} className="grid items-center px-6 py-2"
+              <div key={it.description + n} className="flex flex-wrap md:grid items-center gap-x-3 px-4 md:px-6 py-2"
                 style={{ gridTemplateColumns: "1fr 120px 90px 1fr" }}>
-                <span className="text-xs pl-6 truncate" style={{ color: WARM_GRAY }}>
+                <span className="text-xs pl-4 md:pl-6 w-full md:w-auto truncate" style={{ color: WARM_GRAY }}>
                   {it.description}
                   {it.carried > 0 && <span style={{ color: MUTED_RED }}> · {fmt(it.carried)} carried</span>}
                 </span>
-                <span className="text-xs font-mono text-right" style={{ color: OBSIDIAN }}>{fmt(it.amount)}</span>
-                <span className="text-xs font-mono text-right" style={{ color: it.paid >= it.amount ? MUTED_GRN : "#BDBAB6" }}>
+                <span className="text-xs font-mono md:text-right pl-4 md:pl-0" style={{ color: OBSIDIAN }}>{fmt(it.amount)}</span>
+                <span className="text-xs font-mono md:text-right" style={{ color: it.paid >= it.amount ? MUTED_GRN : "#BDBAB6" }}>
                   {it.paid > 0 ? fmt(it.paid) : "—"}
                 </span>
-                <span className="text-xs pl-5" style={{ color: "#BDBAB6" }}>
+                <span className="text-xs md:pl-5" style={{ color: "#BDBAB6" }}>
                   {it.paid >= it.amount ? "paid" : it.paid > 0 ? "part paid" : "unpaid"}
                 </span>
               </div>
             ))}
-            <div className="px-6 py-2 grid" style={{ gridTemplateColumns: "1fr 120px 90px 1fr", borderTop: `1px solid ${BORDER}` }}>
-              <span className="text-xs pl-6" style={{ color: "#BDBAB6", letterSpacing: "0.1em" }}>AMOUNT · PAID</span>
+            <div className="px-4 md:px-6 py-2 flex flex-wrap md:grid gap-x-3" style={{ gridTemplateColumns: "1fr 120px 90px 1fr", borderTop: `1px solid ${BORDER}` }}>
+              <span className="text-xs pl-4 md:pl-6" style={{ color: "#BDBAB6", letterSpacing: "0.1em" }}>AMOUNT · PAID</span>
               <span className="text-xs font-mono text-right" style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(r.amount)}</span>
               <span className="text-xs font-mono text-right" style={{ color: MUTED_GRN }}>{fmt(r.items.reduce((s2, x) => s2 + x.paid, 0))}</span>
               <span />
@@ -227,7 +227,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       })}
 
       {/* ── Envelope forecast ─────────────────────────────────────────────── */}
-      <div className="grid px-6 py-2" style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: OBSIDIAN }}>
+      <div className="hidden md:grid px-6 py-2" style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: OBSIDIAN }}>
         {["SPENDING", "SO FAR", "PER DAY", "HEADING TO", "CAN AFFORD"].map((h, i) => (
           <p key={h} className="text-xs" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "0.14em", textAlign: i === 0 ? "left" : "right" }}>{h}</p>
         ))}
@@ -235,9 +235,9 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       {envelopes.map((e, i) => {
         const t = TRACK[e.state];
         return (
-          <div key={e.key} className="grid items-center px-6 py-3"
+          <div key={e.key} className="flex flex-wrap md:grid items-center gap-y-2 px-4 md:px-6 py-3"
             style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: i % 2 ? IVORY : SURFACE, borderBottom: `1px solid ${BORDER}` }}>
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 w-full md:w-auto">
               <div className="w-0.5 h-4 shrink-0" style={{ background: e.accent }} />
               <span className="text-xs" style={{ color: OBSIDIAN, letterSpacing: "0.08em" }}>{e.label.toUpperCase()}</span>
               <span className="text-xs px-2 py-0.5 shrink-0"
@@ -250,11 +250,11 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
                 </span>
               )}
             </div>
-            <span className="text-xs font-mono text-right" style={{ color: WARM_GRAY }}>{fmt(e.spent)}</span>
-            <span className="text-xs font-mono text-right" style={{ color: "#BDBAB6" }}>{fmt(e.perDay)}</span>
-            <span className="text-xs font-mono text-right" style={{ color: e.overBy > 0 ? MUTED_RED : OBSIDIAN }}>{fmt(e.projected)}</span>
-            <div className="text-right">
-              <span className="text-xs font-mono" style={{ color: WARM_GRAY }}>{fmt(e.target)}</span>
+            <span className="text-xs font-mono md:text-right" style={{ color: WARM_GRAY }}><span className="md:hidden" style={{ color: "#BDBAB6" }}>spent </span>{fmt(e.spent)}</span>
+            <span className="text-xs font-mono md:text-right ml-3 md:ml-0" style={{ color: "#BDBAB6" }}><span className="md:hidden">{"· "}</span>{fmt(e.perDay)}/day</span>
+            <span className="text-xs font-mono md:text-right ml-3 md:ml-0" style={{ color: e.overBy > 0 ? MUTED_RED : OBSIDIAN }}><span className="md:hidden" style={{ color: "#BDBAB6" }}>{"→ "}</span>{fmt(e.projected)}</span>
+            <div className="md:text-right ml-3 md:ml-0">
+              <span className="text-xs font-mono" style={{ color: WARM_GRAY }}><span className="md:hidden" style={{ color: "#BDBAB6" }}>target </span>{fmt(e.target)}</span>
               <span className="block text-xs" style={{ color: "#BDBAB6" }}>
                 {e.target < e.budget ? `plan ${fmt(e.budget)} · ${e.budgetNote}` : e.budgetNote}
               </span>
@@ -264,19 +264,19 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
       })}
 
       {/* ── Advice ────────────────────────────────────────────────────────── */}
-      <div className="px-6 py-3" style={{ background: IVORY, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
+      <div className="px-4 md:px-6 py-3" style={{ background: IVORY, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
         <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>WHERE TO CUT BACK</p>
       </div>
       <div className="divide-y" style={{ borderColor: BORDER }}>
         {insights.map((ins, i) => (
-          <div key={i} className="px-6 py-4 flex items-start gap-4">
+          <div key={i} className="px-4 md:px-6 py-4 flex flex-wrap items-start gap-3 md:gap-4">
             <span style={{ color: TONE[ins.tone].color, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>{TONE[ins.tone].mark}</span>
             <div className="min-w-0">
               <p className="text-sm" style={{ color: OBSIDIAN }}>{ins.headline}</p>
               <p className="text-xs mt-1 leading-relaxed" style={{ color: WARM_GRAY }}>{ins.detail}</p>
             </div>
             {ins.saving > 0 && (
-              <span className="text-xs font-mono ml-auto shrink-0" style={{ color: MUTED_GRN }}>recovers {fmt(ins.saving)}</span>
+              <span className="text-xs font-mono md:ml-auto shrink-0" style={{ color: MUTED_GRN }}>recovers {fmt(ins.saving)}</span>
             )}
           </div>
         ))}

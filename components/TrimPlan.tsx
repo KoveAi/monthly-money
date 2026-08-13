@@ -129,7 +129,7 @@ export function TrimPlan({ allExpenses, monthKey, incomeExpected }: { allExpense
       <Title monthKey={monthKey} />
 
       {/* ── The verdict ───────────────────────────────────────────────────── */}
-      <div className="mb-4 px-6 py-5" style={{
+      <div className="mb-4 px-4 md:px-6 py-5" style={{
         background: result.solved ? "#F8FBF9" : "#FDF8F8",
         border: `1px solid ${result.solved ? "#C6DCCD" : "#D4B5B5"}`,
         borderLeft: `2px solid ${result.solved ? MUTED_GRN : MUTED_RED}`,
@@ -166,7 +166,7 @@ export function TrimPlan({ allExpenses, monthKey, incomeExpected }: { allExpense
       </div>
 
       {/* ── Actions ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3 px-5 py-3 mb-8" style={{ background: SURFACE, border: `1px solid ${BORDER}` }}>
+      <div className="flex flex-wrap items-center gap-3 px-4 md:px-5 py-3 mb-8" style={{ background: SURFACE, border: `1px solid ${BORDER}` }}>
         <span className="text-xs" style={{ color: WARM_GRAY, letterSpacing: "0.12em" }}>
           {changed.length} LINE{changed.length === 1 ? "" : "S"} PROPOSED · {fmt(result.saved)} A MONTH · {fmt(result.saved * 12)} A YEAR
         </span>
@@ -221,7 +221,7 @@ export function TrimPlan({ allExpenses, monthKey, incomeExpected }: { allExpense
 
             {open && (
               <div>
-                <div className="grid px-5 py-2" style={{ gridTemplateColumns: "1fr 110px 110px 120px 90px", background: OBSIDIAN }}>
+                <div className="hidden md:grid px-5 py-2" style={{ gridTemplateColumns: "1fr 110px 110px 120px 90px", background: OBSIDIAN }}>
                   {["LINE", "AVERAGE", "NOW", "TARGET", "SAVES"].map((h, i) => (
                     <p key={h} className="text-xs" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "0.14em", textAlign: i === 0 ? "left" : "right" }}>{h}</p>
                   ))}
@@ -278,11 +278,11 @@ function TrimRow({ item, zebra, onSet, edited }: {
   }
 
   return (
-    <div className="grid items-center px-5 py-3" style={{
+    <div className="flex flex-wrap md:grid items-center gap-y-1 px-4 md:px-5 py-3" style={{
       gridTemplateColumns: "1fr 110px 110px 120px 90px",
       background: zebra ? IVORY : SURFACE, borderBottom: `1px solid ${BORDER}`,
     }}>
-      <div className="min-w-0 pr-4">
+      <div className="min-w-0 pr-4 w-full md:w-auto">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs" style={{ color: OBSIDIAN, letterSpacing: "0.04em" }}>{item.label}</span>
           {badge && (
@@ -306,10 +306,10 @@ function TrimRow({ item, zebra, onSet, edited }: {
         </p>
       </div>
 
-      <span className="text-xs font-mono text-right" style={{ color: "#BDBAB6" }}>{fmt(item.average)}</span>
-      <span className="text-xs font-mono text-right" style={{ color: WARM_GRAY }}>{fmt(item.current)}</span>
+      <span className="text-xs font-mono md:text-right" style={{ color: "#BDBAB6" }}><span className="md:hidden">avg </span>{fmt(item.average)}</span>
+      <span className="text-xs font-mono md:text-right ml-3 md:ml-0" style={{ color: WARM_GRAY }}><span className="md:hidden">now </span>{fmt(item.current)}</span>
 
-      <div className="flex justify-end">
+      <div className="flex md:justify-end ml-3 md:ml-0">
         {editing ? (
           <input autoFocus type="number" step="0.01" min="0" value={draft}
             onChange={e => setDraft(e.target.value)} onBlur={commit}
@@ -325,7 +325,7 @@ function TrimRow({ item, zebra, onSet, edited }: {
         )}
       </div>
 
-      <span className="text-xs font-mono text-right" style={{ color: saves > 0 ? MUTED_GRN : "#C8C4BF" }}>
+      <span className="text-xs font-mono md:text-right ml-3 md:ml-0" style={{ color: saves > 0 ? MUTED_GRN : "#C8C4BF" }}>
         {saves > 0 ? `−${fmt(saves)}` : "—"}
       </span>
     </div>

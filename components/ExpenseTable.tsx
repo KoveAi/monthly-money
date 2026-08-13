@@ -259,7 +259,10 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
       <div className="grid grid-cols-3 divide-x divide-slate-100 text-center">
         <div className="px-2 py-3">
           <p className="text-xs text-slate-400 mb-0.5">Due</p>
-          <p className="text-sm font-mono font-semibold text-slate-700">{fmt(expense.amount)}</p>
+          <p className="text-sm font-mono font-semibold text-slate-700">{fmt(owedAmount(expense))}</p>
+          {(expense.broughtForward ?? 0) !== 0 && (
+            <p className="text-xs" style={{ color: "#8B2020" }}>{fmt(expense.amount)} + {fmt(expense.broughtForward ?? 0)} carried</p>
+          )}
         </div>
         <div className="px-2 py-3 cursor-pointer" onClick={() => { setEditPaid(true); setPaidVal(String(expense.amountPaid)); }}>
           <p className="text-xs text-slate-400 mb-0.5">Paid <span className="text-blue-400">✎</span></p>
@@ -279,7 +282,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
           )}
         </div>
         <div className="px-2 py-3">
-          <p className="text-xs text-slate-400 mb-0.5">Remaining</p>
+          <p className="text-xs text-slate-400 mb-0.5">Left over</p>
           <p className="text-sm font-mono font-semibold" style={{ color: remaining === 0 ? "#cbd5e1" : remaining > 500 ? "#dc2626" : "#475569" }}>
             {fmt(remaining)}
           </p>

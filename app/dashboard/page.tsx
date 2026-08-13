@@ -472,8 +472,8 @@ export default function DashboardPage() {
 
       {/* ── Page Header ───────────────────────────────────────────────────── */}
       <div style={{ background: OBSIDIAN, borderBottom: `1px solid ${GOLD}` }}>
-        <div className="max-w-screen-2xl mx-auto px-8 py-7">
-          <div className="flex items-center justify-between">
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-5 md:py-7">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs tracking-widest mb-1" style={{ color: GOLD, letterSpacing: "0.2em" }}>ESTATE MANAGEMENT</p>
               <div className="flex items-center gap-3">
@@ -529,7 +529,7 @@ export default function DashboardPage() {
 
       {/* ── Sticky summary bar ────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20" style={{ background: "#1C1C1C", borderBottom: `1px solid #2A2A2A` }}>
-        <div className="max-w-screen-2xl mx-auto px-8 py-2.5 flex items-center gap-8">
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 md:gap-x-8">
           <span style={{ color: GOLD, letterSpacing: "0.18em", fontSize: 10 }}>MONTHLY</span>
           <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
             Owed <strong style={{ color: "#fff", fontWeight: 400 }}>{fmt(mOwed + grOwed + mktOwed)}</strong>
@@ -547,7 +547,7 @@ export default function DashboardPage() {
 
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
-        <div className="max-w-screen-2xl mx-auto px-8 flex gap-0 pt-0">
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 flex gap-0 pt-0 overflow-x-auto">
           {(["overview", "advisor", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
             const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
             const attn   = tab === "overdue" || tab === "unpaid";
@@ -560,7 +560,7 @@ export default function DashboardPage() {
                          :                      `OVERDUE${pastDueCount > 0 ? ` (${pastDueCount})` : ""}`;
             return (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className="px-6 py-3.5 text-xs transition-all"
+                className="px-4 md:px-6 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
                 style={activeTab === tab
                   ? { color: attn ? accent : OBSIDIAN, borderBottom: `2px solid ${accent}`, background: "transparent", letterSpacing: "0.16em", fontWeight: 600 }
                   : { color: attn && count > 0 ? accent : "#9E9E9E", borderBottom: "2px solid transparent", background: "transparent", letterSpacing: "0.16em" }}>
@@ -572,7 +572,7 @@ export default function DashboardPage() {
           <div className="ml-auto flex items-center">
             {(showAnalysis || activeTab === "reduce") && (
               <button onClick={() => setActiveTab("reduce")}
-                className="px-5 py-3.5 text-xs transition-all"
+                className="px-4 md:px-5 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
                 style={activeTab === "reduce"
                   ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
                   : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
@@ -585,7 +585,7 @@ export default function DashboardPage() {
                 setShowAnalysis(open);
                 if (!open && activeTab === "reduce") setActiveTab("overview");
               }}
-              className="px-4 py-3.5 text-xs transition-all"
+              className="px-3 md:px-4 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
               style={{ color: "#BDBAB6", letterSpacing: "0.14em" }}
               title="Planning and reduction tools">
               ANALYSIS {showAnalysis || activeTab === "reduce" ? "▾" : "▸"}
@@ -594,7 +594,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="max-w-screen-2xl mx-auto px-8 py-8">
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-6 md:py-8">
 
         {genMsg && (
           <div className="mb-8 px-5 py-3 text-xs tracking-wide" style={{ background: SURFACE, border: `1px solid ${BORDER}`, color: WARM_GRAY, letterSpacing: "0.06em" }}>
@@ -1175,7 +1175,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Income entries */}
-            <div style={{ border: `1px solid ${BORDER}` }}>
+            <div className="overflow-x-auto" style={{ border: `1px solid ${BORDER}` }}>
+              <div style={{ minWidth: 760 }}>
               {/* Header */}
               <div className="grid px-6 py-2" style={{ gridTemplateColumns: "1fr 140px 120px 120px 110px 80px 60px", background: OBSIDIAN, borderBottom: `1px solid ${BORDER}` }}>
                 {["SOURCE", "CATEGORY", "DATE", "EXPECTED", "RECEIVED", "DIFF", ""].map((h, i) => (
@@ -1267,6 +1268,7 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
+              </div>
             </div>
 
             {/* Add income form */}
