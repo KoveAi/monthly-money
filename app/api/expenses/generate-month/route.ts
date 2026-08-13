@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, safeDay)),
           isRecurring: true,
           frequency: "monthly",
-          status: null,
+          status: e.status === "Paused" ? "Paused" : null,
           monthKey: targetMonthKey,
         },
       });
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, origDay)),
           isRecurring: true,
           frequency: "annual",
-          status: null,
+          status: e.status === "Paused" ? "Paused" : null,
           notes: e.notes,
           monthKey: targetMonthKey,
         },
