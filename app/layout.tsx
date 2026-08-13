@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { BackToTop } from "@/components/BackToTop";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </header>
 
         <main>{children}</main>
+        <BackToTop />
 
         <footer className="mt-16 py-5 text-center text-xs border-t"
           style={{ background: "#fff", borderColor: "#e2e8f0", color: "#94a3b8" }}>
