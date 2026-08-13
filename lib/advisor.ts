@@ -662,3 +662,123 @@ export function arrearsComment(a: ArrearsPosition, progress: MonthProgress): Com
         + `than this one did.`,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cost structure. The ledger is organised by how entries are managed; this is
+// organised by what the money is for, which is the only view that answers "why
+// does this not work" rather than "what did I spend".
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CostGroup {
+  name: string;
+  match: RegExp;
+  /** Share of income above which this is a recognised problem, not a preference. */
+  benchmark?: number;
+  benchmarkNote?: string;
+}
+
+/**
+ * First match wins, so order is the classification. Business and Marketing are
+ * matched by section before any keyword, because what they are for is the venture,
+ * whatever the tool happens to be called.
+ */
+export const COST_GROUPS: CostGroup[] = [
+  { name: "Housing",        match: /mortgage|hoa|poa|rent/i, benchmark: 0.28,
+    benchmarkNote: "28% is the usual ceiling; above 35% a household cannot absorb a bad month" },
+  { name: "Medical",        match: /respicare|helms|nutrafol|health|medical|dental|pharmacy/i },
+  { name: "Debt service",   match: /credit one|401k|capital one|ulta credit|regional finance|school loan|amex|american express|kohl|paypal|synchrony/i,
+    benchmark: 0.10, benchmarkNote: "servicing above 10% of income is money buying nothing" },
+  { name: "Utilities",      match: /duke|aqua|tri-river|enbridge|energy|water|sewage|gas bill|electric/i },
+  { name: "Telecom",        match: /at&t|internet|phone|icloud|storage/i },
+  { name: "Home services",  match: /treeist|landscap|pest|disposal|trash|hvac|adt|security|cleaning/i },
+  { name: "Insurance",      match: /insurance|progressive|geico|allstate/i },
+  { name: "Bank fees",      match: /maintenance fee|bank fee|overdraft/i },
+];
+
+export interface CostRow {
+  name: string;
+  amount: number;
+  /** Share of income, 0–1. */
+  share: number;
+  benchmark?: number;
+  benchmarkNote?: string;
+  /** Over its benchmark, where one exists. */
+  overBenchmark: boolean;
+  lines: number;
+}
+
+export interface CostStructure {
+  rows: CostRow[];
+  bills: number;
+  variable: number;
+  total: number;
+  income: number;
+  /** total / income. Above 1 means spending outruns earning. */
+  ratio: number;
+  deficit: number;
+  /** The share of the bill base sitting in the largest few lines. */
+  topShare: number;
+  topCount: number;
+}
+
+/**
+ * Group a month's spending by purpose. `variableActual` is passed in because a
+ * month in progress under-reports food and fuel — the caller knows whether to use
+ * this month's partial figure or the last complete month's total.
+ */
+export function costStructure(
+  monthEntries: (AdvisorEntry & { amount: number })[],
+  income: number,
+  variableActual: number,
+): CostStructure {
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const totals = new Map<string, { amount: number; lines: number }>();
+  const billLines: number[] = [];
+
+  for (const e of monthEntries) {
+    const section = sectionOf(e);
+    if (section === "income" || section === "liens") continue;
+    if ((VARIABLE_KEYS as readonly string[]).includes(section)) continue;
+    const amount = budgetAmount(e);
+    if (amount <= 0) continue;
+    billLines.push(amount);
+
+    const name = (section === "business" || section === "marketing")
+      ? "Business & marketing"
+      : COST_GROUPS.find(g => g.match.test(e.description))?.name ?? "Everything else";
+
+    const cur = totals.get(name) ?? { amount: 0, lines: 0 };
+    totals.set(name, { amount: cur.amount + amount, lines: cur.lines + 1 });
+  }
+
+  const bills = r2(billLines.reduce((s, v) => s + v, 0));
+  const rows: CostRow[] = Array.from(totals.entries()).map(([name, v]) => {
+    const g = COST_GROUPS.find(x => x.name === name);
+    const share = income > 0 ? v.amount / income : 0;
+    return {
+      name, amount: r2(v.amount), share, lines: v.lines,
+      benchmark: g?.benchmark, benchmarkNote: g?.benchmarkNote,
+      overBenchmark: g?.benchmark !== undefined && share > g.benchmark,
+    };
+  });
+
+  rows.push({
+    name: "Food & fuel", amount: r2(variableActual),
+    share: income > 0 ? variableActual / income : 0,
+    lines: 0, overBenchmark: false,
+  });
+  rows.sort((a, b) => b.amount - a.amount);
+
+  const total = r2(bills + variableActual);
+  // How concentrated the bill base is: if a handful of lines carry most of it,
+  // trimming the long tail cannot matter however many items are in it.
+  const sorted = billLines.slice().sort((a, b) => b - a);
+  const topCount = Math.min(8, sorted.length);
+  const topShare = bills > 0 ? sorted.slice(0, topCount).reduce((s, v) => s + v, 0) / bills : 0;
+
+  return {
+    rows, bills, variable: r2(variableActual), total, income: r2(income),
+    ratio: income > 0 ? total / income : 0, deficit: r2(income - total),
+    topShare, topCount,
+  };
+}

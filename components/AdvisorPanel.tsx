@@ -5,7 +5,7 @@ import type { Expense } from "@/components/ExpenseTable";
 import {
   baselineMonths, buildBaseline, sectionBaselines, monthProgress,
   forecastEnvelopes, billOverruns, buildInsights,
-  affordability, applyAffordability, buildCommentary, arrearsPosition, arrearsComment,
+  affordability, applyAffordability, buildCommentary, arrearsPosition, arrearsComment, costStructure,
   type EnvelopeForecast, type Insight, type Comment,
 } from "@/lib/advisor";
 import { budgetAmount, sectionOf } from "@/lib/finance";
@@ -77,12 +77,18 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
     // Catching up is tracked beside the month, not inside it: billsNow is this
     // month's charges only, so a payment against old debt never reads as overspend.
     const arrears   = arrearsPosition(monthEntries);
+    // Food and fuel are under-reported mid-month, so the structure view uses the
+    // last complete month's total — otherwise the 12th always flatters the picture.
+    const lastFullVariable = sections.groceries || sections.restaurants || sections.incidental || sections.fuel
+      ? (sections.groceries ?? 0) + (sections.restaurants ?? 0) + (sections.incidental ?? 0) + (sections.fuel ?? 0)
+      : envelopes.reduce((s2, e) => s2 + e.projected, 0);
+    const structure = costStructure(monthEntries, incomeExpected, lastFullVariable);
 
     const projectedVariable = envelopes.reduce((s, e) => s + e.projected, 0);
     const projected = Math.round((billsNow + projectedVariable) * 100) / 100;
 
     return {
-      months, progress, envelopes, overruns, billsNow, projectedVariable, projected, afford,
+      months, progress, envelopes, overruns, billsNow, projectedVariable, projected, afford, structure,
       insights: buildInsights(envelopes, overruns, projected, incomeExpected, progress),
       arrears,
       comments: [arrearsComment(arrears, progress), ...buildCommentary(afford, envelopes, overruns, projected, progress)],
@@ -91,7 +97,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
   }, [allExpenses, monthEntries, monthKey, now, incomeExpected]);
 
   if (!view || view.months.length === 0) return null;
-  const { progress, envelopes, insights, comments, afford, arrears, shortfall } = view;
+  const { progress, envelopes, insights, comments, afford, arrears, structure, shortfall } = view;
   const ok = shortfall <= 0;
 
   return (
@@ -138,6 +144,47 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
           );
         })}
       </div>
+
+      {/* ── Where the money goes ──────────────────────────────────────────── */}
+      <div className="px-6 py-3 flex flex-wrap items-baseline gap-x-4" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+        <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.2em" }}>WHERE THE MONEY GOES</p>
+        <span className="text-xs" style={{ color: structure.ratio > 1 ? MUTED_RED : MUTED_GRN, letterSpacing: "0.06em" }}>
+          {fmt(structure.total)} of spending against {fmt(structure.income)} of income —{" "}
+          <strong style={{ fontWeight: 500 }}>
+            {structure.ratio > 1
+              ? `$${structure.ratio.toFixed(2)} spent for every $1.00 earned`
+              : `${Math.round(structure.ratio * 100)}% of income committed`}
+          </strong>
+        </span>
+        <span className="text-xs ml-auto" style={{ color: "#BDBAB6" }}>
+          top {structure.topCount} bills are {Math.round(structure.topShare * 100)}% of the bill base
+        </span>
+      </div>
+      {structure.rows.map((r, i) => (
+        <div key={r.name} className="grid items-center px-6 py-3"
+          style={{ gridTemplateColumns: "1fr 120px 90px 1fr", background: i % 2 ? IVORY : SURFACE, borderBottom: `1px solid ${BORDER}` }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xs" style={{ color: OBSIDIAN, letterSpacing: "0.08em" }}>{r.name.toUpperCase()}</span>
+            {r.overBenchmark && (
+              <span className="text-xs px-2 py-0.5 shrink-0" style={{ background: "#FAF2F2", color: MUTED_RED, border: "1px solid #D4B5B5", letterSpacing: "0.06em" }}>
+                {Math.round((r.benchmark ?? 0) * 100)}% IS THE CEILING
+              </span>
+            )}
+          </div>
+          <span className="text-xs font-mono text-right" style={{ color: OBSIDIAN }}>{fmt(r.amount)}</span>
+          <span className="text-xs font-mono text-right" style={{ color: r.overBenchmark ? MUTED_RED : WARM_GRAY }}>
+            {Math.round(r.share * 100)}%
+          </span>
+          <div className="pl-5 flex items-center gap-3">
+            <div className="flex-1 h-1.5" style={{ background: BORDER }}>
+              <div className="h-1.5" style={{ width: `${Math.min(r.share * 100, 100)}%`, background: r.overBenchmark ? MUTED_RED : r.name === "Business & marketing" ? "#8B5E7A" : GOLD }} />
+            </div>
+            {r.benchmarkNote && r.overBenchmark && (
+              <span className="text-xs shrink-0" style={{ color: "#BDBAB6", maxWidth: 300 }}>{r.benchmarkNote}</span>
+            )}
+          </div>
+        </div>
+      ))}
 
       {/* ── Envelope forecast ─────────────────────────────────────────────── */}
       <div className="grid px-6 py-2" style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: OBSIDIAN }}>

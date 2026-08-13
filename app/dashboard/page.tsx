@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
-import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { TrimPlan } from "@/components/TrimPlan";
 import { AdvisorPanel } from "@/components/AdvisorPanel";
 import { computeStatus } from "@/lib/status";
@@ -76,7 +75,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "planner" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
+  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -571,27 +570,25 @@ export default function DashboardPage() {
           })}
 
           <div className="ml-auto flex items-center">
-            {(showAnalysis || activeTab === "planner" || activeTab === "reduce") && (
-              (["planner", "reduce"] as const).map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className="px-5 py-3.5 text-xs transition-all"
-                  style={activeTab === tab
-                    ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
-                    : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
-                  {tab === "planner" ? "PLANNER" : "REDUCE"}
-                </button>
-              ))
+            {(showAnalysis || activeTab === "reduce") && (
+              <button onClick={() => setActiveTab("reduce")}
+                className="px-5 py-3.5 text-xs transition-all"
+                style={activeTab === "reduce"
+                  ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
+                  : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
+                REDUCE
+              </button>
             )}
             <button
               onClick={() => {
                 const open = !showAnalysis;
                 setShowAnalysis(open);
-                if (!open && (activeTab === "planner" || activeTab === "reduce")) setActiveTab("overview");
+                if (!open && activeTab === "reduce") setActiveTab("overview");
               }}
               className="px-4 py-3.5 text-xs transition-all"
               style={{ color: "#BDBAB6", letterSpacing: "0.14em" }}
               title="Planning and reduction tools">
-              ANALYSIS {showAnalysis || activeTab === "planner" || activeTab === "reduce" ? "▾" : "▸"}
+              ANALYSIS {showAnalysis || activeTab === "reduce" ? "▾" : "▸"}
             </button>
           </div>
         </div>
@@ -1154,16 +1151,9 @@ export default function DashboardPage() {
           )
         )}
 
-        {/* ── PLANNER TAB ───────────────────────────────────────────────── */}
-        {activeTab === "planner" && (
-          loading
-            ? <Loader />
-            : <BudgetPlanner allExpenses={allExpenses} monthKey={monthKey} />
-        )}
-
         {/* ── REDUCE TAB ────────────────────────────────────────────────── */}
         {activeTab === "reduce" && (
-          loading ? <Loader /> : <TrimPlan allExpenses={allExpenses} monthKey={monthKey} />
+          loading ? <Loader /> : <TrimPlan allExpenses={allExpenses} monthKey={monthKey} incomeExpected={iExp} />
         )}
 
         {/* ── INCOME TAB ────────────────────────────────────────────────── */}

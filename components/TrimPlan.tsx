@@ -36,7 +36,7 @@ function read<T>(key: string, fallback: T): T {
 
 type Store = Record<string, Record<string, number>>;
 
-export function TrimPlan({ allExpenses, monthKey }: { allExpenses: Expense[]; monthKey: string }) {
+export function TrimPlan({ allExpenses, monthKey, incomeExpected }: { allExpenses: Expense[]; monthKey: string; incomeExpected: number }) {
   const [store, setStore] = useState<Store>({});
   const [plan, setPlan] = useState<{ income?: number; basis?: IncomeBasis; perCategory?: Record<string, number> }>({});
   const [openTier, setOpenTier] = useState<Tier | null>("discretionary");
@@ -70,7 +70,8 @@ export function TrimPlan({ allExpenses, monthKey }: { allExpenses: Expense[]; mo
       : estimatePlan(base, annual.monthly);
   }, [allExpenses, monthKey, plan.basis]);
 
-  const income        = plan.income ?? derived.plannedIncome;
+  // The month's actual recorded income, same figure the advisor scores against.
+  const income        = incomeExpected || plan.income || derived.plannedIncome;
   const annualMonthly = plan.perCategory?.annual ?? derived.perCategory.annual;
   const debtPaydown   = plan.perCategory?.liens  ?? derived.perCategory.liens;
   const incomeIsYours = plan.income !== undefined;
@@ -149,7 +150,7 @@ export function TrimPlan({ allExpenses, monthKey }: { allExpenses: Expense[]; mo
       {/* ── Where you are, where this gets you ────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
         {[
-          { label: "Income",        value: fmt(result.income),        sub: incomeIsYours ? "your figure, from the planner" : `averaged from ${derived.monthsUsed.length} month${derived.monthsUsed.length === 1 ? "" : "s"}`, accent: OBSIDIAN },
+          { label: "Income",        value: fmt(result.income),        sub: incomeExpected ? "recorded for this month" : incomeIsYours ? "your figure" : `averaged from ${derived.monthsUsed.length} month${derived.monthsUsed.length === 1 ? "" : "s"}`, accent: OBSIDIAN },
           { label: "Spending Now",  value: fmt(result.currentTotal),  sub: "bills + variable",        accent: OBSIDIAN },
           { label: "Set-Aside",     value: fmt(result.annualMonthly + result.debtPaydown), sub: "annual + obligations", accent: "#8A8078" },
           { label: "Gap Now",       value: fmt(result.gapNow),        sub: result.gapNow >= 0 ? "clear" : "short every month", accent: result.gapNow >= 0 ? MUTED_GRN : MUTED_RED },

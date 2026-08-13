@@ -420,9 +420,9 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr style={{ background: headerColor }}>
-                {["Expense", "Category", "Due Date", "Charge", "Brought Fwd", "Owed", "Paid", "Left Over", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
+                {["Expense", "Category", "Due Date", "Owed", "Paid", "Left Over", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
                   <th key={i} className="px-3 py-3"
-                    style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 7 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
+                    style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 5 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
                     {h}
                   </th>
                 ))}
@@ -430,7 +430,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={baseline ? 12 : 11} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
+                <tr><td colSpan={baseline ? 10 : 9} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
               )}
               {filtered.map((expense) => {
                 const status    = getStatus(expense);
@@ -502,28 +502,15 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                       )}
                     </td>
 
-                    {/* Amount Due */}
-                    <td className="px-3 py-2.5 text-right cursor-pointer" style={{ borderRight: `1px solid ${BORDER}` }}
-                      onClick={() => !isInline && startInline(expense.id, "amount", String(expense.amount))}>
+                    {/* Owed — the total, with the split beneath. Both halves are still
+                        editable: the charge, and the balance carried in from last month. */}
+                    <td className="px-3 py-2.5 text-right" style={{ borderRight: `1px solid ${BORDER}` }}>
                       {isInline && inlineField === "amount" ? (
                         <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
                           onChange={e => setInlineValue(e.target.value)}
                           onBlur={() => commitInline(expense)}
                           onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
                           className="text-right" style={{ width: 90, fontSize: 12 }} />
-                      ) : (
-                        <span className="font-mono text-xs" style={{ color: OBSIDIAN }}>
-                          {saving === expense.id && inlineField === "amount" ? "…" : fmt(expense.amount)}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Brought forward — editable, so arrears can be entered directly.
-                        Pay-to-use lines never carry, so there is nothing to enter. */}
-                    <td className="px-3 py-2.5 text-right" style={{ borderRight: `1px solid ${BORDER}`, cursor: isPayAsYouGo(expense) ? "default" : "pointer" }}
-                      onClick={() => !isInline && !isPayAsYouGo(expense) && startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0))}>
-                      {isPayAsYouGo(expense) ? (
-                        <span className="text-xs" style={{ color: "#C8C4BF", letterSpacing: "0.04em" }}>pay to use</span>
                       ) : isInline && inlineField === "broughtForward" ? (
                         <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
                           onChange={e => setInlineValue(e.target.value)}
@@ -531,15 +518,27 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                           onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
                           className="text-right" style={{ width: 90, fontSize: 12 }} />
                       ) : (
-                        <span className="font-mono text-xs" style={{ color: (expense.broughtForward ?? 0) > 0 ? MUTED_RED : "#C8C4BF" }}>
-                          {(expense.broughtForward ?? 0) > 0 ? fmt(expense.broughtForward ?? 0) : "—"}
-                        </span>
+                        <>
+                          <span className="font-mono text-xs" style={{ color: OBSIDIAN, fontWeight: 500 }}>
+                            {saving === expense.id ? "…" : fmt(owedAmount(expense))}
+                          </span>
+                          <span className="block text-xs mt-0.5" style={{ color: "#BDBAB6" }}>
+                            <button onClick={() => startInline(expense.id, "amount", String(expense.amount))}
+                              className="hover:opacity-60" style={{ borderBottom: `1px dashed ${BORDER}` }}>
+                              {fmt(expense.amount)}
+                            </button>
+                            {isPayAsYouGo(expense)
+                              ? <span style={{ color: "#D6D2CC" }}> · pay to use</span>
+                              : (expense.broughtForward ?? 0) !== 0
+                                ? <button onClick={() => startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0))}
+                                    className="hover:opacity-60" style={{ color: MUTED_RED, marginLeft: 4 }}>
+                                    + {fmt(expense.broughtForward ?? 0)} carried
+                                  </button>
+                                : <button onClick={() => startInline(expense.id, "broughtForward", "0")}
+                                    className="hover:opacity-60" style={{ color: "#D6D2CC", marginLeft: 4 }}>+ carried</button>}
+                          </span>
+                        </>
                       )}
-                    </td>
-
-                    {/* Owed — charge plus what rolled in. Read only: it is the sum of the two. */}
-                    <td className="px-3 py-2.5 text-right font-mono text-xs" style={{ borderRight: `1px solid ${BORDER}`, color: OBSIDIAN, fontWeight: 500 }}>
-                      {fmt(owedAmount(expense))}
                     </td>
 
                     {/* Amount Paid */}
@@ -644,9 +643,8 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                     style={{ color: headerTextColor ?? "rgba(255,255,255,0.5)", borderRight: "1px solid rgba(255,255,255,0.07)", letterSpacing: "0.16em" }}>
                     {filtered.length} item{filtered.length !== 1 ? "s" : ""}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalAmount)}</td>
-                  <td className="px-4 py-3 text-right font-mono" style={{ color: headerTextColor ?? "rgba(255,255,255,0.65)", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalBrought)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalOwed)}</td>
+
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ? "#15803d" : "#86efac", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalPaid)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalRemaining)}</td>
                   <td colSpan={baseline ? 5 : 4} />
