@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Expense } from "@/components/ExpenseTable";
 import {
   baselineMonths, buildBaseline, sectionBaselines, monthProgress,
   forecastEnvelopes, billOverruns, buildInsights,
   affordability, applyAffordability, buildCommentary, arrearsPosition, arrearsComment, costStructure,
-  type EnvelopeForecast, type Insight, type Comment,
+  type EnvelopeForecast, type Insight, type Comment, type CostItem,
 } from "@/lib/advisor";
 import { budgetAmount, sectionOf } from "@/lib/finance";
 
@@ -54,6 +54,8 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
   now: Date | null;
   incomeExpected: number;
 }) {
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+
   const view = useMemo(() => {
     if (!now) return null;
     const months    = baselineMonths(allExpenses, monthKey);
@@ -77,12 +79,15 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
     // Catching up is tracked beside the month, not inside it: billsNow is this
     // month's charges only, so a payment against old debt never reads as overspend.
     const arrears   = arrearsPosition(monthEntries);
-    // Food and fuel are under-reported mid-month, so the structure view uses the
-    // last complete month's total — otherwise the 12th always flatters the picture.
-    const lastFullVariable = sections.groceries || sections.restaurants || sections.incidental || sections.fuel
-      ? (sections.groceries ?? 0) + (sections.restaurants ?? 0) + (sections.incidental ?? 0) + (sections.fuel ?? 0)
-      : envelopes.reduce((s2, e) => s2 + e.projected, 0);
-    const structure = costStructure(monthEntries, incomeExpected, lastFullVariable);
+    // Food and fuel are under-reported mid-month, so the structure view uses each
+    // envelope's full-month figure — otherwise the 12th always flatters the picture.
+    const variableRows: CostItem[] = envelopes.map(e => ({
+      description: e.label,
+      amount: sections[e.key] ?? e.projected,
+      paid: e.spent,
+      carried: 0,
+    }));
+    const structure = costStructure(monthEntries, incomeExpected, variableRows);
 
     const projectedVariable = envelopes.reduce((s, e) => s + e.projected, 0);
     const projected = Math.round((billsNow + projectedVariable) * 100) / 100;
@@ -160,11 +165,17 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
           top {structure.topCount} bills are {Math.round(structure.topShare * 100)}% of the bill base
         </span>
       </div>
-      {structure.rows.map((r, i) => (
-        <div key={r.name} className="grid items-center px-6 py-3"
-          style={{ gridTemplateColumns: "1fr 120px 90px 1fr", background: i % 2 ? IVORY : SURFACE, borderBottom: `1px solid ${BORDER}` }}>
+      {structure.rows.map((r, i) => {
+        const open = openGroup === r.name;
+        return (
+        <div key={r.name} style={{ borderBottom: `1px solid ${BORDER}` }}>
+        <button onClick={() => setOpenGroup(open ? null : r.name)}
+          className="w-full grid items-center px-6 py-3 text-left hover:opacity-80 transition-opacity"
+          style={{ gridTemplateColumns: "1fr 120px 90px 1fr", background: i % 2 ? IVORY : SURFACE }}>
           <div className="flex items-center gap-3 min-w-0">
+            <span style={{ color: GOLD, fontSize: 9, width: 8 }}>{open ? "▾" : "▸"}</span>
             <span className="text-xs" style={{ color: OBSIDIAN, letterSpacing: "0.08em" }}>{r.name.toUpperCase()}</span>
+            <span className="text-xs" style={{ color: "#BDBAB6" }}>{r.lines} {r.lines === 1 ? "line" : "lines"}</span>
             {r.overBenchmark && (
               <span className="text-xs px-2 py-0.5 shrink-0" style={{ background: "#FAF2F2", color: MUTED_RED, border: "1px solid #D4B5B5", letterSpacing: "0.06em" }}>
                 {Math.round((r.benchmark ?? 0) * 100)}% IS THE CEILING
@@ -183,8 +194,37 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
               <span className="text-xs shrink-0" style={{ color: "#BDBAB6", maxWidth: 300 }}>{r.benchmarkNote}</span>
             )}
           </div>
+        </button>
+
+        {open && (
+          <div style={{ background: "#FCFBF9", borderTop: `1px solid ${BORDER}` }}>
+            {r.items.map((it, n) => (
+              <div key={it.description + n} className="grid items-center px-6 py-2"
+                style={{ gridTemplateColumns: "1fr 120px 90px 1fr" }}>
+                <span className="text-xs pl-6 truncate" style={{ color: WARM_GRAY }}>
+                  {it.description}
+                  {it.carried > 0 && <span style={{ color: MUTED_RED }}> · {fmt(it.carried)} carried</span>}
+                </span>
+                <span className="text-xs font-mono text-right" style={{ color: OBSIDIAN }}>{fmt(it.amount)}</span>
+                <span className="text-xs font-mono text-right" style={{ color: it.paid >= it.amount ? MUTED_GRN : "#BDBAB6" }}>
+                  {it.paid > 0 ? fmt(it.paid) : "—"}
+                </span>
+                <span className="text-xs pl-5" style={{ color: "#BDBAB6" }}>
+                  {it.paid >= it.amount ? "paid" : it.paid > 0 ? "part paid" : "unpaid"}
+                </span>
+              </div>
+            ))}
+            <div className="px-6 py-2 grid" style={{ gridTemplateColumns: "1fr 120px 90px 1fr", borderTop: `1px solid ${BORDER}` }}>
+              <span className="text-xs pl-6" style={{ color: "#BDBAB6", letterSpacing: "0.1em" }}>AMOUNT · PAID</span>
+              <span className="text-xs font-mono text-right" style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(r.amount)}</span>
+              <span className="text-xs font-mono text-right" style={{ color: MUTED_GRN }}>{fmt(r.items.reduce((s2, x) => s2 + x.paid, 0))}</span>
+              <span />
+            </div>
+          </div>
+        )}
         </div>
-      ))}
+        );
+      })}
 
       {/* ── Envelope forecast ─────────────────────────────────────────────── */}
       <div className="grid px-6 py-2" style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: OBSIDIAN }}>

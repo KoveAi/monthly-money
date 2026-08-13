@@ -695,9 +695,19 @@ export const COST_GROUPS: CostGroup[] = [
   { name: "Bank fees",      match: /maintenance fee|bank fee|overdraft/i },
 ];
 
+export interface CostItem {
+  description: string;
+  amount: number;
+  paid: number;
+  /** Unpaid balance carried into this month on this line. */
+  carried: number;
+}
+
 export interface CostRow {
   name: string;
   amount: number;
+  /** The individual bills behind the total, largest first. */
+  items: CostItem[];
   /** Share of income, 0–1. */
   share: number;
   benchmark?: number;
@@ -727,12 +737,13 @@ export interface CostStructure {
  * this month's partial figure or the last complete month's total.
  */
 export function costStructure(
-  monthEntries: (AdvisorEntry & { amount: number })[],
+  monthEntries: (AdvisorEntry & { amount: number; amountPaid: number; broughtForward?: number; paymentDate: Date | string | null; dueDate: Date | string })[],
   income: number,
-  variableActual: number,
+  variableRows: CostItem[],
 ): CostStructure {
   const r2 = (v: number) => Math.round(v * 100) / 100;
-  const totals = new Map<string, { amount: number; lines: number }>();
+  const variableActual = variableRows.reduce((s, r) => s + r.amount, 0);
+  const totals = new Map<string, { amount: number; lines: number; items: CostItem[] }>();
   const billLines: number[] = [];
 
   for (const e of monthEntries) {
@@ -747,8 +758,12 @@ export function costStructure(
       ? "Business & marketing"
       : COST_GROUPS.find(g => g.match.test(e.description))?.name ?? "Everything else";
 
-    const cur = totals.get(name) ?? { amount: 0, lines: 0 };
-    totals.set(name, { amount: cur.amount + amount, lines: cur.lines + 1 });
+    const cur = totals.get(name) ?? { amount: 0, lines: 0, items: [] };
+    cur.items.push({
+      description: e.description, amount: r2(amount),
+      paid: r2(effectivePaid(e)), carried: r2(e.broughtForward ?? 0),
+    });
+    totals.set(name, { amount: cur.amount + amount, lines: cur.lines + 1, items: cur.items });
   }
 
   const bills = r2(billLines.reduce((s, v) => s + v, 0));
@@ -757,6 +772,7 @@ export function costStructure(
     const share = income > 0 ? v.amount / income : 0;
     return {
       name, amount: r2(v.amount), share, lines: v.lines,
+      items: v.items.sort((a, b) => b.amount - a.amount),
       benchmark: g?.benchmark, benchmarkNote: g?.benchmarkNote,
       overBenchmark: g?.benchmark !== undefined && share > g.benchmark,
     };
@@ -765,7 +781,8 @@ export function costStructure(
   rows.push({
     name: "Food & fuel", amount: r2(variableActual),
     share: income > 0 ? variableActual / income : 0,
-    lines: 0, overBenchmark: false,
+    lines: variableRows.length, items: variableRows.slice().sort((a, b) => b.amount - a.amount),
+    overBenchmark: false,
   });
   rows.sort((a, b) => b.amount - a.amount);
 
