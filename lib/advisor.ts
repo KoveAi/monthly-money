@@ -1,4 +1,4 @@
-import { budgetAmount, effectivePaid, isPayAsYouGo, sectionOf, type Classifiable } from "@/lib/finance";
+import { budgetAmount, effectivePaid, isKept, isPayAsYouGo, sectionOf, type Classifiable } from "@/lib/finance";
 import { VARIABLE_KEYS, SECTION_META, type SectionKey } from "@/lib/budget";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -282,6 +282,8 @@ export function billOverruns(
     const section = sectionOf(e);
     if (section === "income" || section === "liens") continue;
     if ((VARIABLE_KEYS as readonly string[]).includes(section)) continue;
+    // A line ruled in by the household is not a saving waiting to happen.
+    if (isKept(e)) continue;
     const v = verdictFor(e, baselines);
     if (v.state === "over" && v.baseline !== null) {
       out.push({ label: e.description, over: v.over, baseline: v.baseline, section: section as SectionKey });

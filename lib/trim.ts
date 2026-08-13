@@ -1,4 +1,4 @@
-import { budgetAmount, isPaused, sectionOf, type Classifiable, type Settleable } from "@/lib/finance";
+import { budgetAmount, isKept, keptReason, isPaused, sectionOf, type Classifiable, type Settleable } from "@/lib/finance";
 import { SECTION_META, VARIABLE_KEYS, type SectionKey } from "@/lib/budget";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,6 +93,9 @@ export interface TrimItem {
   overlapGroup?: string;
   dormant: boolean;
   duplicate: boolean;
+  /** Confirmed as needed — never proposed, whatever the heuristics say. */
+  kept: boolean;
+  keptWhy?: string;
 }
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -166,6 +169,7 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
         tier: classify(e), current: 0, average: 0, suggested: 0, target: 0,
         action: "keep", reasons: [], overlapGroup: overlapGroupOf(e.description),
         dormant: has(hay, DORMANT), duplicate: false,
+        kept: isKept(e), keptWhy: keptReason(e) ?? undefined,
         monthsSeen: new Map(), charges: 0,
       };
       byKey.set(key, it);
@@ -199,14 +203,15 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
     items.push({
       key: `variable:${key}`, ids: [], label: SECTION_META[key].label, category: "Variable",
       section: key, tier: "variable", current: avg, average: avg, suggested: avg, target: avg,
-      action: "keep", reasons: [], dormant: false, duplicate: false,
+      action: "keep", reasons: [], dormant: false, duplicate: false, kept: false,
     });
   }
 
   // ── Score every line for how readily it could go ──────────────────────────
   // Lower rank = suggest first. Nothing here forces a cut; it only sets the order.
   const rank = (i: TrimItem) =>
-    i.dormant                    ? 0
+    i.kept                       ? 99
+    : i.dormant                  ? 0
     : i.duplicate                ? 1
     : i.overlapGroup && i.tier === "discretionary" ? 2
     : i.tier === "discretionary" ? 3
@@ -230,6 +235,7 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
     // Default to changing nothing, then propose only while still short.
     i.suggested = i.current;
     i.action = "keep";
+    if (i.kept && i.keptWhy) i.reasons.push(`kept — ${i.keptWhy}`);
 
     if (gap >= 0 || rank(i) === 99) continue;
 

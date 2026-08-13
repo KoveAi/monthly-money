@@ -260,6 +260,10 @@ function TrimRow({ item, zebra, onSet, edited }: {
   const [draft, setDraft] = useState("");
   const saves = item.current - item.target;
 
+  const keepBadge = item.kept
+    ? { text: "KEPT", bg: "#F8FBF9", fg: MUTED_GRN, br: "#C6DCCD" }
+    : null;
+
   const badge = item.action === "cut"
     ? { text: "CUT", bg: "#FDF8F8", fg: MUTED_RED, br: "#D4B5B5" }
     : item.action === "reduce"
@@ -283,6 +287,11 @@ function TrimRow({ item, zebra, onSet, edited }: {
           {badge && (
             <span className="text-xs px-2 py-0.5 shrink-0" style={{ background: badge.bg, color: badge.fg, border: `1px solid ${badge.br}`, letterSpacing: "0.06em" }}>
               {badge.text}
+            </span>
+          )}
+          {keepBadge && (
+            <span className="text-xs px-2 py-0.5 shrink-0" style={{ background: keepBadge.bg, color: keepBadge.fg, border: `1px solid ${keepBadge.br}`, letterSpacing: "0.06em" }}>
+              {keepBadge.text}
             </span>
           )}
           {edited && (

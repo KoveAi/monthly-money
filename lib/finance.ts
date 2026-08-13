@@ -95,6 +95,31 @@ export function rollingRemaining(e: Settleable & Classifiable & { status: string
   return isPayAsYouGo(e) ? 0 : effectiveRemaining(e);
 }
 
+/**
+ * Lines confirmed as needed. The reduction engine matches tools by category and
+ * cannot see who uses them — two Claude subscriptions in a two-person household
+ * look like duplication and are not — so anything named here is never proposed as
+ * a cut, whatever the engine thinks it has spotted. Add to it as things are ruled
+ * in; that judgement belongs to the household, not the heuristic.
+ */
+export const KEEP_LIST: { match: string; why: string }[] = [
+  { match: "claude max",     why: "coding — daily driver" },
+  { match: "claude ai",      why: "Michelle's projects" },
+  { match: "chat gpt",       why: "both of you, separate uses" },
+  { match: "chatgpt",        why: "both of you, separate uses" },
+  { match: "anthropic",      why: "API credits" },
+  { match: "bastion",        why: "Michelle, pay as you go" },
+  { match: "google one",     why: "Michelle" },
+  { match: "theranest",      why: "practice management — the business runs on it" },
+];
+
+export function keptReason(e: Classifiable): string | null {
+  const name = e.description.toLowerCase();
+  return KEEP_LIST.find(k => name.includes(k.match))?.why ?? null;
+}
+
+export const isKept = (e: Classifiable) => keptReason(e) !== null;
+
 /** Minimum shape needed to route an entry into its ledger section. */
 export interface Classifiable {
   description: string;
