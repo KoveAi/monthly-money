@@ -155,7 +155,7 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
   // can cancel, and treating 30 shop names as 30 cuttable subscriptions would both
   // mislead and wildly overstate the monthly total. It is handled as four envelopes
   // below, on the same basis the planner uses.
-  const byKey = new Map<string, TrimItem & { monthsSeen: Map<string, number>; charges: number }>();
+  const byKey = new Map<string, TrimItem & { monthsSeen: Map<string, number>; charges: number[] }>();
   for (const e of entries) {
     const section = sectionOf(e);
     if (section === "income" || section === "liens" || e.frequency === "annual") continue;
@@ -173,20 +173,24 @@ export function buildTrimPlan(input: TrimInput): TrimResult {
         action: "keep", reasons: [], overlapGroup: overlapGroupOf(e.description),
         dormant: has(hay, DORMANT), duplicate: false,
         kept: isKept(e), keptWhy: keptReason(e) ?? undefined,
-        monthsSeen: new Map(), charges: 0,
+        monthsSeen: new Map(), charges: [],
       };
       byKey.set(key, it);
     }
     it.monthsSeen.set(e.monthKey, (it.monthsSeen.get(e.monthKey) ?? 0) + e.amount);
-    if (e.monthKey === monthKey) { it.current += e.amount; it.ids.push(e.id); it.charges++; }
+    if (e.monthKey === monthKey) { it.current += e.amount; it.ids.push(e.id); it.charges.push(round2(e.amount)); }
   }
 
   const items: TrimItem[] = [];
   for (const it of Array.from(byKey.values())) {
     const amounts = Array.from(it.monthsSeen.values());
     it.average = round2(amounts.reduce((s, v) => s + v, 0) / amounts.length);
-    // The same bill, same category, charged twice inside one month.
-    it.duplicate = it.charges > 1;
+    // A duplicate is the SAME amount charged twice, not merely two charges. Two
+    // different amounts on two different dates is a payment schedule — a doctor
+    // taking $180 on the 5th and $60 on the 20th, eight separate App Store
+    // charges, two Eleven Labs accounts on different plans — and calling any of
+    // those a duplicate proposed a saving that was never there.
+    it.duplicate = it.charges.length > 1 && new Set(it.charges).size < it.charges.length;
     const { monthsSeen, charges, ...rest } = it;
     // A bill counts at what it is billed this month — a line that has stopped
     // appearing has stopped costing.
