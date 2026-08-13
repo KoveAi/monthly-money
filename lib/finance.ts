@@ -111,6 +111,7 @@ export const KEEP_LIST: { match: string; why: string }[] = [
   { match: "bastion",        why: "Michelle, pay as you go" },
   { match: "google one",     why: "Michelle" },
   { match: "theranest",      why: "practice management — the business runs on it" },
+  { match: "nutrafol",       why: "health supplement Michelle needs — not discretionary" },
 ];
 
 export function keptReason(e: Classifiable): string | null {
