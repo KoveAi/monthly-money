@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { TrimPlan } from "@/components/TrimPlan";
-import { baselineMonths, buildBaseline } from "@/lib/advisor";
 import { AdvisorPanel } from "@/components/AdvisorPanel";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, budgetAmount, owedAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
@@ -316,12 +315,6 @@ export default function DashboardPage() {
   const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
   const fuel        = sortAlpha(expenses.filter(e => e.frequency === "fuel"));
 
-  // ── Advisor baseline ───────────────────────────────────────────────────────
-  // What each line cost in the most recent closed months — June and July when you
-  // are looking at August. Every table compares its rows against this.
-  const advisorMonths   = useMemo(() => baselineMonths(allExpenses, monthKey), [allExpenses, monthKey]);
-  const advisorBaseline = useMemo(() => buildBaseline(allExpenses, advisorMonths), [allExpenses, advisorMonths]);
-
   // ── Stats ──────────────────────────────────────────────────────────────────
   // Owed is the charge plus anything carried in. Every "due" figure on this page is
   // owed, so that owed − paid = left over holds everywhere instead of only sometimes.
@@ -466,7 +459,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="p-4">
-            <ExpenseTable expenses={g.rows} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
+            <ExpenseTable expenses={g.rows} onUpdate={handleUpdate} onDelete={handleDelete}
               headerColor={g.color} headerTextColor={g.text} onMove={handleMoveSection}
               categoryOptions={g.label === "Business Finances" ? ["GR Business", "Kove Ai-Business", "Business Finance"] : undefined} />
           </div>
@@ -773,7 +766,7 @@ export default function DashboardPage() {
               )}
               {loading
                 ? <Loader />
-                : <ExpenseTable expenses={applySearch(monthly, searchMonthly)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
+                : <ExpenseTable expenses={applySearch(monthly, searchMonthly)} onUpdate={handleUpdate} onDelete={handleDelete}
                     headerColor={OBSIDIAN} onMove={handleMoveSection} />}
             </SectionBlock>
 
@@ -845,7 +838,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
+                <ExpenseTable expenses={applySearch(grBusiness, searchGR)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={GR_BEIGE} headerTextColor={OBSIDIAN}
                   categoryOptions={["GR Business", "Kove Ai-Business"]} onMove={handleMoveSection} />
               )}
@@ -911,7 +904,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(marketing, searchMarketing)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
+                <ExpenseTable expenses={applySearch(marketing, searchMarketing)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={MKT_MAUVE} onMove={handleMoveSection} />
               )}
             </SectionBlock>
@@ -976,7 +969,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(annual, searchAnnual)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
+                <ExpenseTable expenses={applySearch(annual, searchAnnual)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={OBSIDIAN} onMove={handleMoveSection} />
               )}
             </SectionBlock>
@@ -1041,7 +1034,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {!loading && (
-                <ExpenseTable expenses={applySearch(liens, searchLiens)} onUpdate={handleUpdate} onDelete={handleDelete} baseline={advisorBaseline}
+                <ExpenseTable expenses={applySearch(liens, searchLiens)} onUpdate={handleUpdate} onDelete={handleDelete}
                   headerColor={OBSIDIAN} onMove={handleMoveSection} />
               )}
             </SectionBlock>
