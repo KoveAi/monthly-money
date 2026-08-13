@@ -125,7 +125,8 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
         <p className="text-sm mt-2 leading-relaxed" style={{ color: WARM_GRAY }}>
           This month&apos;s charges are {fmt(view.billsNow)} of {fmt(incomeExpected)}, leaving{" "}
           <strong style={{ color: afford.available < 0 ? MUTED_RED : OBSIDIAN, fontWeight: 500 }}>{fmt(afford.available)}</strong>{" "}
-          for everything else. Spending is running at {fmt(view.projectedVariable)}, so the month lands near{" "}
+          for food, fuel and everything else — against a {fmt(afford.planned)} plan for those.
+          Spending is running at {fmt(view.projectedVariable)}, so the month lands near{" "}
           <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{fmt(view.projected)}</strong>.
           {arrears.opening > 0 && (
             <> Separately, {fmt(arrears.opening)} of arrears came in and {fmt(arrears.paidDown)} of it is cleared —
@@ -228,7 +229,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
 
       {/* ── Envelope forecast ─────────────────────────────────────────────── */}
       <div className="hidden md:grid px-6 py-2" style={{ gridTemplateColumns: "1fr 100px 110px 110px 130px", background: OBSIDIAN }}>
-        {["SPENDING", "SO FAR", "PER DAY", "HEADING TO", "CAN AFFORD"].map((h, i) => (
+        {["SPENDING", "SO FAR", "PER DAY", "HEADING TO", "TARGET"].map((h, i) => (
           <p key={h} className="text-xs" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "0.14em", textAlign: i === 0 ? "left" : "right" }}>{h}</p>
         ))}
       </div>
@@ -256,7 +257,7 @@ export function AdvisorPanel({ allExpenses, monthEntries, monthKey, now, incomeE
             <div className="md:text-right ml-3 md:ml-0">
               <span className="text-xs font-mono" style={{ color: WARM_GRAY }}><span className="md:hidden" style={{ color: "#BDBAB6" }}>target </span>{fmt(e.target)}</span>
               <span className="block text-xs" style={{ color: "#BDBAB6" }}>
-                {e.target < e.budget ? `plan ${fmt(e.budget)} · ${e.budgetNote}` : e.budgetNote}
+                {e.budgetNote}
               </span>
             </div>
           </div>

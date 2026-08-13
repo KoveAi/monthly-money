@@ -333,8 +333,7 @@ export function buildInsights(
       headline: e.label + ": pull back " + money(e.cutPerWeek) + " a week",
       detail: money(e.spent) + " in " + progress.daysGone + " days is " + money(e.perDay)
             + " a day — landing at " + money(e.projected) + " against " + money(e.target)
-            + " (" + (e.target < e.budget ? "all the income leaves after bills" : e.budgetNote) + "). That is "
-            + money(e.overBy) + " over.",
+            + " (" + e.budgetNote + "). That is " + money(e.overBy) + " over.",
       saving: e.overBy, tone: "cut",
     });
   }
@@ -418,14 +417,16 @@ export function applyAffordability(
   return envelopes.map(e => {
     const share = planned > 0 ? e.budget / planned : 0;
     const affordable = r2(pot * share);
-    // When the bills already exceed income there is nothing to allocate, and scaling
-    // every envelope to zero would be advising no food. The plan stands as the target
-    // in that case; the commentary carries the harder message, which is that hitting
-    // every target still will not balance the month.
-    const target = afford.unfunded ? e.budget : Math.min(e.budget, affordable);
+    // The target is the plan, always. Scaling it down to whatever income happens to
+    // leave produced targets like $59.33 of groceries for a month — arithmetically
+    // impeccable and useless as instruction, because a household cannot eat a share
+    // of a shortfall. What income actually leaves is reported separately, which is
+    // the honest way to put it: the plan is $708.57, the money available is $59.33,
+    // and the difference is the problem rather than a spending decision.
+    const target = e.budget;
     const overBy = r2(Math.max(0, e.projected - target));
     const state: TrackState =
-      target <= 0                 ? "over"
+      target <= 0                 ? "on-track"
       : e.spent > target          ? "over"
       : e.projected > target * 1.05 ? "heading-over"
       : e.projected < target * 0.9  ? "under"
