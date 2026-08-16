@@ -112,11 +112,30 @@ export const KEEP_LIST: { match: string; why: string }[] = [
   { match: "google one",     why: "Michelle" },
   { match: "theranest",      why: "practice management — the business runs on it" },
   { match: "nutrafol",       why: "health supplement Michelle needs — not discretionary" },
+  // Michelle's practice: the things it cannot legally or practically run without.
+  { match: "the bold building", why: "office space — the practice cannot lose it" },
+  { match: "psychology today",  why: "directory listing — the practice's referral channel" },
+  { match: "hspo",              why: "professional liability insurance — cannot see clients without it" },
+  { match: "aon",               why: "professional liability insurance — cannot see clients without it" },
+  { match: "ncblcmhc",          why: "licensure board / PLLC renewal" },
 ];
+
+/**
+ * The category field already separates the two businesses: GR Business is
+ * Michelle's practice, Kove Ai-Business is Chris's venture. Keeping the category
+ * rather than fourteen line names means new practice expenses are protected the
+ * day they are added, without anyone remembering to add them here.
+ */
+export const MICHELLE_CATEGORIES = ["gr business", "gr-business"];
 
 export function keptReason(e: Classifiable): string | null {
   const name = e.description.toLowerCase();
-  return KEEP_LIST.find(k => name.includes(k.match))?.why ?? null;
+  const named = KEEP_LIST.find(k => name.includes(k.match))?.why;
+  if (named) return named;
+  if (MICHELLE_CATEGORIES.includes(e.category.trim().toLowerCase())) {
+    return "Michelle's practice — non-negotiable";
+  }
+  return null;
 }
 
 export const isKept = (e: Classifiable) => keptReason(e) !== null;
