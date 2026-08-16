@@ -75,7 +75,7 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
-  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
+  const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "period-a" | "period-b" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -314,6 +314,19 @@ export default function DashboardPage() {
   const incidental  = sortAlpha(expenses.filter(e => e.frequency === "incidental"));
   const fuel        = sortAlpha(expenses.filter(e => e.frequency === "fuel"));
 
+  // ── Pay periods ────────────────────────────────────────────────────────────
+  // Bills are settled against two pay windows rather than a calendar month, so the
+  // due date decides which window a bill belongs to. Change the date on a row and
+  // it moves between the tabs on its own — no second field to keep in step.
+  const periodOf = (e: Expense): "a" | "b" => {
+    const day = new Date(e.dueDate).getUTCDate();
+    return day >= 5 && day < 20 ? "a" : "b";
+  };
+  const PERIODS = {
+    "a": { label: "5th \u2013 20th", note: "due on or after the 5th, before the 20th" },
+    "b": { label: "20th \u2013 5th", note: "due on or after the 20th, through the 4th" },
+  } as const;
+
   // ── Stats ──────────────────────────────────────────────────────────────────
   // Owed is the charge plus anything carried in. Every "due" figure on this page is
   // owed, so that owed − paid = left over holds everywhere instead of only sometimes.
@@ -467,6 +480,89 @@ export default function DashboardPage() {
     });
   }
 
+  function renderPeriod(period: "a" | "b") {
+    const inWindow = (e: Expense) => periodOf(e) === period;
+    // Obligations are balances carried until they clear, not payments falling due in
+    // a window. Counting a $6,694 lien as this fortnight's bill buried every real
+    // one under it, so they are left to their own section.
+    const paySections = attentionSections.filter(s => s.label !== "Outstanding Obligations");
+    const groups = paySections
+      .map(s => ({ ...s, rows: s.items.filter(inWindow) }))
+      .filter(g => g.rows.length > 0);
+
+    const bills   = paySections.flatMap(s => s.items).filter(inWindow);
+    const owed    = bills.reduce((t, e) => t + owedAmount(e), 0);
+    const paid    = bills.reduce((t, e) => t + effectivePaid(e), 0);
+    const left    = owed - paid;
+    const inflow  = income.filter(inWindow);
+    const expected = inflow.reduce((t, e) => t + budgetAmount(e), 0);
+    const received = inflow.reduce((t, e) => t + effectivePaid(e), 0);
+    const covers   = expected - owed;
+
+    return (
+      <div className="py-2">
+        <p className="text-xs mb-6" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>
+          {PERIODS[period].label.toUpperCase()} — {fmtMonth(monthKey).toUpperCase()}
+          <span style={{ color: "#BDBAB6" }}> · {PERIODS[period].note}</span>
+        </p>
+
+        {/* Can this window's income cover this window's bills? */}
+        <div className="mb-6 px-5 py-4" style={{
+          background: covers >= 0 ? "#F8FBF9" : "#FDF8F8",
+          border: `1px solid ${covers >= 0 ? "#C6DCCD" : "#D4B5B5"}`,
+          borderLeft: `2px solid ${covers >= 0 ? MUTED_GRN : MUTED_RED}`,
+        }}>
+          <p className="text-xs mb-2" style={{ color: covers >= 0 ? MUTED_GRN : MUTED_RED, letterSpacing: "0.18em" }}>
+            {covers >= 0
+              ? `THIS WINDOW COVERS ITSELF \u2014 ${fmt(covers)} SPARE`
+              : `SHORT BY ${fmt(Math.abs(covers))} IN THIS WINDOW`}
+          </p>
+          <div className="flex flex-wrap gap-x-6 gap-y-1">
+            {[
+              { k: "INCOME LANDING", v: fmt(expected), s: `${fmt(received)} received` },
+              { k: "BILLS OWED",     v: fmt(owed),     s: `${bills.length} due` },
+              { k: "PAID",           v: fmt(paid),     s: "so far" },
+              { k: "LEFT OVER",      v: fmt(left),     s: "still to settle" },
+            ].map(x => (
+              <span key={x.k} className="text-xs" style={{ color: WARM_GRAY }}>
+                {x.k} <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{x.v}</strong>
+                <span style={{ color: "#BDBAB6" }}> · {x.s}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {groups.length === 0 && (
+          <p className="text-center py-16 text-xs tracking-widest" style={{ color: "#BDBAB6", letterSpacing: "0.2em" }}>
+            NOTHING DUE IN THIS WINDOW
+          </p>
+        )}
+
+        {groups.map(g => {
+          const gOwed = g.rows.reduce((t, e) => t + owedAmount(e), 0);
+          const gLeft = g.rows.reduce((t, e) => t + effectiveRemaining(e), 0);
+          return (
+            <div key={g.label} className="mb-8" style={{ border: `1px solid ${BORDER}` }}>
+              <div className="px-5 py-3 flex flex-wrap items-center gap-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
+                <div className="w-0.5 h-4 shrink-0" style={{ background: g.color }} />
+                <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.16em" }}>{g.label.toUpperCase()}</p>
+                <span className="text-xs md:ml-auto" style={{ color: WARM_GRAY }}>
+                  {g.rows.length} · {fmt(gOwed)} owed
+                  {gLeft > 0 && <span style={{ color: MUTED_RED }}> · {fmt(gLeft)} left</span>}
+                </span>
+              </div>
+              <div className="p-2 md:p-4">
+                <ExpenseTable expenses={g.rows} onUpdate={handleUpdate} onDelete={handleDelete}
+                  headerColor={g.color} headerTextColor={g.text} onMove={handleMoveSection}
+                  categoryOptions={g.label === "Business Finances" ? ["GR Business", "Kove Ai-Business", "Business Finance"] : undefined} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: IVORY, minHeight: "100vh", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
@@ -548,12 +644,14 @@ export default function DashboardPage() {
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
         <div className="max-w-screen-2xl mx-auto px-4 md:px-8 flex gap-0 pt-0 overflow-x-auto">
-          {(["overview", "advisor", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
+          {(["overview", "advisor", "period-a", "period-b", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
             const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
             const attn   = tab === "overdue" || tab === "unpaid";
             const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
             const label  = tab === "advisor"  ? "ADVISOR"
                          : tab === "overview" ? "OVERVIEW"
+                         : tab === "period-a" ? "5TH \u2013 20TH"
+                         : tab === "period-b" ? "20TH \u2013 5TH"
                          : tab === "income"   ? "INCOME"
                          : tab === "paid"     ? "PAID"
                          : tab === "unpaid"   ? `UNPAID${unpaidCount > 0 ? ` (${unpaidCount})` : ""}`
@@ -1150,6 +1248,10 @@ export default function DashboardPage() {
             </div>
           )
         )}
+
+        {/* Pay period tabs: the due date decides the window, so editing a date moves the row */}
+        {activeTab === "period-a" && (loading ? <Loader /> : renderPeriod("a"))}
+        {activeTab === "period-b" && (loading ? <Loader /> : renderPeriod("b"))}
 
         {/* ── REDUCE TAB ────────────────────────────────────────────────── */}
         {activeTab === "reduce" && (
