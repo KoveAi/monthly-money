@@ -118,6 +118,11 @@ export const KEEP_LIST: { match: string; why: string }[] = [
   { match: "hspo",              why: "professional liability insurance — cannot see clients without it" },
   { match: "aon",               why: "professional liability insurance — cannot see clients without it" },
   { match: "ncblcmhc",          why: "licensure board / PLLC renewal" },
+  // Chris's, and ruled in: filed under Business Finance rather than either
+  // business category, so the category rule below would never have caught them.
+  { match: "vsco",              why: "Chris — non-negotiable" },
+  { match: "repost",            why: "Chris — non-negotiable" },
+  { match: "apple bill - claude", why: "Claude via the App Store — Chris" },
 ];
 
 /**
