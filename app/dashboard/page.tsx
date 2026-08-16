@@ -482,22 +482,39 @@ export default function DashboardPage() {
 
   function renderPeriod(period: "a" | "b") {
     const inWindow = (e: Expense) => periodOf(e) === period;
-    // Obligations are balances carried until they clear, not payments falling due in
-    // a window. Counting a $6,694 lien as this fortnight's bill buried every real
-    // one under it, so they are left to their own section.
-    const paySections = attentionSections.filter(s => s.label !== "Outstanding Obligations");
-    const groups = paySections
+
+    // Every section, so a window shows the whole month's activity rather than just
+    // its bills. Income first because it is what the rest is measured against, then
+    // the bills, then what gets spent, then the balances.
+    const periodSections: { label: string; items: Expense[]; color: string; text?: string; kind: "income" | "bill" | "spend" | "balance" }[] = [
+      { label: "Income",                  items: income,      color: MUTED_GRN,  kind: "income"  },
+      { label: "Expenses",                items: monthly,     color: OBSIDIAN,   kind: "bill"    },
+      { label: "Business Finances",       items: grBusiness,  color: GR_BEIGE, text: OBSIDIAN, kind: "bill" },
+      { label: "Marketing",               items: marketing,   color: MKT_MAUVE,  kind: "bill"    },
+      { label: "Annual Expenses",         items: annual,      color: "#8A8078",  kind: "bill"    },
+      { label: "Groceries",               items: groceries,   color: "#4A7C59",  kind: "spend"   },
+      { label: "Restaurants",             items: restaurants, color: "#7C4A4A",  kind: "spend"   },
+      { label: "Incidental",              items: incidental,  color: "#4A6B7C",  kind: "spend"   },
+      { label: "Fuel",                    items: fuel,        color: "#8B6320",  kind: "spend"   },
+      { label: "Outstanding Obligations", items: liens,       color: MUTED_RED,  kind: "balance" },
+    ];
+    const groups = periodSections
       .map(s => ({ ...s, rows: s.items.filter(inWindow) }))
       .filter(g => g.rows.length > 0);
 
-    const bills   = paySections.flatMap(s => s.items).filter(inWindow);
-    const owed    = bills.reduce((t, e) => t + owedAmount(e), 0);
-    const paid    = bills.reduce((t, e) => t + effectivePaid(e), 0);
-    const left    = owed - paid;
-    const inflow  = income.filter(inWindow);
+    const pick = (kind: string) => periodSections.filter(s => s.kind === kind).flatMap(s => s.items).filter(inWindow);
+    const bills    = pick("bill");
+    const owed     = bills.reduce((t, e) => t + owedAmount(e), 0);
+    const paid     = bills.reduce((t, e) => t + effectivePaid(e), 0);
+    const left     = owed - paid;
+    const spent    = pick("spend").reduce((t, e) => t + budgetAmount(e), 0);
+    const balances = pick("balance").reduce((t, e) => t + owedAmount(e), 0);
+    const inflow   = pick("income");
     const expected = inflow.reduce((t, e) => t + budgetAmount(e), 0);
     const received = inflow.reduce((t, e) => t + effectivePaid(e), 0);
-    const covers   = expected - owed;
+    // Balances are excluded: a lien is carried until it clears, not a payment due
+    // in a fortnight, and counting one buries every real bill in the window.
+    const covers   = expected - owed - spent;
 
     return (
       <div className="py-2">
@@ -521,8 +538,10 @@ export default function DashboardPage() {
             {[
               { k: "INCOME LANDING", v: fmt(expected), s: `${fmt(received)} received` },
               { k: "BILLS OWED",     v: fmt(owed),     s: `${bills.length} due` },
-              { k: "PAID",           v: fmt(paid),     s: "so far" },
+              { k: "SPENT",          v: fmt(spent),    s: "food, fuel, incidental" },
+              { k: "PAID",           v: fmt(paid),     s: "bills settled so far" },
               { k: "LEFT OVER",      v: fmt(left),     s: "still to settle" },
+              ...(balances > 0 ? [{ k: "OBLIGATIONS", v: fmt(balances), s: "balance, not counted above" }] : []),
             ].map(x => (
               <span key={x.k} className="text-xs" style={{ color: WARM_GRAY }}>
                 {x.k} <strong style={{ color: OBSIDIAN, fontWeight: 500 }}>{x.v}</strong>
@@ -541,14 +560,15 @@ export default function DashboardPage() {
         {groups.map(g => {
           const gOwed = g.rows.reduce((t, e) => t + owedAmount(e), 0);
           const gLeft = g.rows.reduce((t, e) => t + effectiveRemaining(e), 0);
+          const gLabel = g.kind === "income" ? "expected" : g.kind === "spend" ? "spent" : "owed";
           return (
             <div key={g.label} className="mb-8" style={{ border: `1px solid ${BORDER}` }}>
               <div className="px-5 py-3 flex flex-wrap items-center gap-3" style={{ background: IVORY, borderBottom: `1px solid ${BORDER}` }}>
                 <div className="w-0.5 h-4 shrink-0" style={{ background: g.color }} />
                 <p className="text-xs font-semibold" style={{ color: OBSIDIAN, letterSpacing: "0.16em" }}>{g.label.toUpperCase()}</p>
                 <span className="text-xs md:ml-auto" style={{ color: WARM_GRAY }}>
-                  {g.rows.length} · {fmt(gOwed)} owed
-                  {gLeft > 0 && <span style={{ color: MUTED_RED }}> · {fmt(gLeft)} left</span>}
+                  {g.rows.length} · {fmt(gOwed)} {gLabel}
+                  {gLeft > 0 && g.kind !== "spend" && <span style={{ color: MUTED_RED }}> · {fmt(gLeft)} left</span>}
                 </span>
               </div>
               <div className="p-2 md:p-4">
