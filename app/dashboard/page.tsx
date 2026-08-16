@@ -75,6 +75,20 @@ export default function DashboardPage() {
   });
   const [addError, setAddError]           = useState<string | null>(null);
   const [addIncomeError, setAddIncomeError] = useState<string | null>(null);
+  // The two everyday screens sit on the strip; everything else groups under the
+  // question it answers, so the bar reads as four choices rather than nine.
+  const TAB_LABEL: Record<string, string> = {
+    overview: "OVERVIEW", advisor: "ADVISOR",
+    "period-a": "5TH \u2013 20TH", "period-b": "20TH \u2013 5TH",
+    income: "INCOME", paid: "PAID", unpaid: "UNPAID", overdue: "OVERDUE",
+    reduce: "REDUCE",
+  };
+  const TAB_MENUS = [
+    { key: "periods",  label: "PAY PERIODS", tabs: ["period-a", "period-b"] as const },
+    { key: "status",   label: "STATUS",      tabs: ["income", "paid", "unpaid", "overdue"] as const },
+    { key: "analysis", label: "ANALYSIS",    tabs: ["reduce"] as const },
+  ];
+
   const [activeTab, setActiveTab]         = useState<"advisor" | "overview" | "period-a" | "period-b" | "reduce" | "income" | "paid" | "unpaid" | "overdue">("overview");
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -82,9 +96,7 @@ export default function DashboardPage() {
     const t = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(t);
   }, []);
-  // Planner and Reduce are analysis tools rather than everyday views, so they stay
-  // off the main strip until asked for.
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [openInsights, setOpenInsights] = useState(true);
   const [openMonthly, setOpenMonthly] = useState(false);
   const [incomeInlineId,    setIncomeInlineId]    = useState<string | null>(null);
@@ -661,54 +673,68 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Tab bar ───────────────────────────────────────────────────────── */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE }}>
-        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 flex gap-0 pt-0 overflow-x-auto">
-          {(["overview", "advisor", "period-a", "period-b", "income", "paid", "unpaid", "overdue"] as const).map(tab => {
-            const accent = tab === "overdue" ? MUTED_RED : tab === "unpaid" ? AMBER : GOLD;
-            const attn   = tab === "overdue" || tab === "unpaid";
-            const count  = tab === "overdue" ? pastDueCount : tab === "unpaid" ? unpaidCount : 0;
-            const label  = tab === "advisor"  ? "ADVISOR"
-                         : tab === "overview" ? "OVERVIEW"
-                         : tab === "period-a" ? "5TH \u2013 20TH"
-                         : tab === "period-b" ? "20TH \u2013 5TH"
-                         : tab === "income"   ? "INCOME"
-                         : tab === "paid"     ? "PAID"
-                         : tab === "unpaid"   ? `UNPAID${unpaidCount > 0 ? ` (${unpaidCount})` : ""}`
-                         :                      `OVERDUE${pastDueCount > 0 ? ` (${pastDueCount})` : ""}`;
+      {/* ── Tab bar ─────────────────────────────────────────────── */}
+      {/* Eight tabs across the top made every screen look equally important. The two
+          you live in stay put; the rest group under the question they answer. */}
+      <div style={{ borderBottom: `1px solid ${BORDER}`, background: SURFACE, position: "relative", zIndex: 30 }}>
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 flex gap-0 pt-0">
+
+          {(["overview", "advisor"] as const).map(tab => (
+            <button key={tab} onClick={() => { setActiveTab(tab); setOpenMenu(null); }}
+              className="px-4 md:px-6 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
+              style={activeTab === tab
+                ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
+                : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
+              {tab === "overview" ? "OVERVIEW" : "ADVISOR"}
+            </button>
+          ))}
+
+          {TAB_MENUS.map(menu => {
+            const holdsActive = menu.tabs.some(t => t === activeTab);
+            const open = openMenu === menu.key;
+            // A count on the trigger, so tucking Overdue away does not hide it.
+            const alert = menu.key === "status" ? pastDueCount : 0;
             return (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className="px-4 md:px-6 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
-                style={activeTab === tab
-                  ? { color: attn ? accent : OBSIDIAN, borderBottom: `2px solid ${accent}`, background: "transparent", letterSpacing: "0.16em", fontWeight: 600 }
-                  : { color: attn && count > 0 ? accent : "#9E9E9E", borderBottom: "2px solid transparent", background: "transparent", letterSpacing: "0.16em" }}>
-                {label}
-              </button>
+              <div key={menu.key} className="relative shrink-0">
+                <button onClick={() => setOpenMenu(open ? null : menu.key)}
+                  className="px-4 md:px-6 py-3.5 text-xs whitespace-nowrap transition-all"
+                  style={holdsActive
+                    ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
+                    : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
+                  {holdsActive ? TAB_LABEL[activeTab] : menu.label}
+                  {alert > 0 && !holdsActive && (
+                    <span style={{ color: MUTED_RED, marginLeft: 6 }}>({alert})</span>
+                  )}
+                  <span style={{ color: GOLD, fontSize: 9, marginLeft: 6 }}>{open ? "\u25BE" : "\u25B8"}</span>
+                </button>
+
+                {open && (
+                  <>
+                    {/* Click anywhere else to close. */}
+                    <div className="fixed inset-0" style={{ zIndex: 10 }} onClick={() => setOpenMenu(null)} />
+                    <div className="absolute left-0 top-full min-w-[210px]"
+                      style={{ background: SURFACE, border: `1px solid ${BORDER}`, boxShadow: "0 6px 24px rgba(0,0,0,0.10)", zIndex: 20 }}>
+                      {menu.tabs.map(t => {
+                        const count = t === "overdue" ? pastDueCount : t === "unpaid" ? unpaidCount : 0;
+                        const tone  = t === "overdue" ? MUTED_RED : t === "unpaid" ? AMBER : OBSIDIAN;
+                        return (
+                          <button key={t} onClick={() => { setActiveTab(t); setOpenMenu(null); }}
+                            className="w-full px-5 py-3 text-left text-xs whitespace-nowrap hover:opacity-70 transition-opacity flex items-center gap-3"
+                            style={{ color: activeTab === t ? OBSIDIAN : "#6B6460", borderBottom: `1px solid ${BORDER}`,
+                                     background: activeTab === t ? IVORY : SURFACE, letterSpacing: "0.12em",
+                                     fontWeight: activeTab === t ? 600 : 400 }}>
+                            <span className="w-0.5 h-3" style={{ background: activeTab === t ? GOLD : "transparent" }} />
+                            {TAB_LABEL[t]}
+                            {count > 0 && <span className="ml-auto" style={{ color: tone }}>{count}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })}
-
-          <div className="ml-auto flex items-center">
-            {(showAnalysis || activeTab === "reduce") && (
-              <button onClick={() => setActiveTab("reduce")}
-                className="px-4 md:px-5 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
-                style={activeTab === "reduce"
-                  ? { color: OBSIDIAN, borderBottom: `2px solid ${GOLD}`, letterSpacing: "0.16em", fontWeight: 600 }
-                  : { color: "#9E9E9E", borderBottom: "2px solid transparent", letterSpacing: "0.16em" }}>
-                REDUCE
-              </button>
-            )}
-            <button
-              onClick={() => {
-                const open = !showAnalysis;
-                setShowAnalysis(open);
-                if (!open && activeTab === "reduce") setActiveTab("overview");
-              }}
-              className="px-3 md:px-4 py-3.5 text-xs whitespace-nowrap shrink-0 transition-all"
-              style={{ color: "#BDBAB6", letterSpacing: "0.14em" }}
-              title="Planning and reduction tools">
-              ANALYSIS {showAnalysis || activeTab === "reduce" ? "▾" : "▸"}
-            </button>
-          </div>
         </div>
       </div>
 
