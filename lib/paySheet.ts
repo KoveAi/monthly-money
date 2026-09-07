@@ -49,6 +49,7 @@ export interface PaySheet {
 
 const VARIABLE = ["groceries", "restaurants", "incidental", "fuel"];
 const money = (v: number) => "$" + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const esc = (s: string) => String(s).replace(/[&<>"]/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
@@ -120,9 +121,9 @@ export function buildPaySheet({ entries, monthKey, window: win, today }: PayShee
   // A window is one stretch of calendar, or two when it crosses a month end.
   const stretches = win === "a"
     ? [{ monthKey, to: 19, label: `${monthName(monthKey, "long")} 1–19, ${monthKey.slice(0, 4)}`,
-         note: "Bills in the current 5th–20th pay window that still need money, plus anything earlier in the month still outstanding." }]
+         note: "Every bill in the current 5th–20th pay window, paid and unpaid, plus anything earlier in the month." }]
     : [{ monthKey, to: lastDay(monthKey), label: `${monthName(monthKey, "long")} 20–${lastDay(monthKey)}, ${monthKey.slice(0, 4)}`,
-         note: "Bills in the current 20th–5th pay window that still need money, plus anything earlier in the month still outstanding." },
+         note: "Every bill in the current 20th–5th pay window, paid and unpaid, plus anything earlier in the month." },
        { monthKey: next, to: 4, label: `${monthName(next, "long")} 1–4, ${next.slice(0, 4)}`,
          note: "The tail of the same pay window, falling in the following month." }];
 
@@ -274,17 +275,17 @@ export function buildPaySheet({ entries, monthKey, window: win, today }: PayShee
      Every bill in the window, paid and unpaid: OWED is the charge plus anything carried in, LEFT is what remains after payments.</p>
 
   <div class="urgency">
-    <div class="u-later"><span class="k">Owed</span><span class="v">${money(sum(all, "owed"))}</span><span class="n">${all.length} bills</span></div>
+    <div class="u-later"><span class="k">Owed</span><span class="v">${money(sum(all, "owed"))}</span><span class="n">${plural(all.length, "bill")}</span></div>
     <div class="u-paid"><span class="k">Paid</span><span class="v">${money(sum(all, "paid"))}</span><span class="n">${count("Paid")} settled</span></div>
-    <div class="u-later"><span class="k">Still to pay</span><span class="v">${money(sum(all, "left"))}</span><span class="n">${all.length - count("Paid")} bills</span></div>
-    <div class="u-overdue"><span class="k">Overdue</span><span class="v">${money(of("Overdue"))}</span><span class="n">${count("Overdue")} bills</span></div>
-    <div class="u-today"><span class="k">Due today</span><span class="v">${money(of("Due Today"))}</span><span class="n">${count("Due Today")} bills</span></div>
-    <div class="u-upcoming"><span class="k">Next 3 days</span><span class="v">${money(of("Upcoming"))}</span><span class="n">${count("Upcoming")} bills</span></div>
+    <div class="u-later"><span class="k">Still to pay</span><span class="v">${money(sum(all, "left"))}</span><span class="n">${plural(all.length - count("Paid"), "bill")}</span></div>
+    <div class="u-overdue"><span class="k">Overdue</span><span class="v">${money(of("Overdue"))}</span><span class="n">${plural(count("Overdue"), "bill")}</span></div>
+    <div class="u-today"><span class="k">Due today</span><span class="v">${money(of("Due Today"))}</span><span class="n">${plural(count("Due Today"), "bill")}</span></div>
+    <div class="u-upcoming"><span class="k">Next 3 days</span><span class="v">${money(of("Upcoming"))}</span><span class="n">${plural(count("Upcoming"), "bill")}</span></div>
   </div>
 
   ${sections.map((s, i) => `
-  <div class="band"><span class="num">${i + 1} &middot;</span> ${esc(s.label)} &nbsp;(unpaid)
-    <span class="count">${s.rows.length} bills</span></div>
+  <div class="band"><span class="num">${i + 1} &middot;</span> ${esc(s.label)}
+    <span class="count">${plural(s.rows.length, "bill")} &middot; ${s.rows.filter(r => r.left > 0).length} still to pay</span></div>
   <p class="band-note">${esc(s.note)} Ordered by due date.</p>
   ${table(s.rows, `Subtotal — ${s.label}`)}`).join("")}
 
