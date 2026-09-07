@@ -79,6 +79,7 @@ function EditModal({ expense, onSave, onClose }: {
   const [form, setForm] = useState({
     description:  expense.description,
     amount:       String(expense.amount),
+    broughtForward: String(expense.broughtForward ?? 0),
     amountPaid:   String(expense.amountPaid),
     category:     expense.category,
     dueDate:      toInputDate(expense.dueDate),
@@ -90,13 +91,17 @@ function EditModal({ expense, onSave, onClose }: {
     frequency:    expense.frequency,
   });
   const [saving, setSaving] = useState(false);
-  const remaining = Math.max(0, (parseFloat(form.amount) || 0) - (parseFloat(form.amountPaid) || 0));
+  // Same arithmetic as the table: total owed is the charge plus the past due
+  // balance, and what is left is that total less what has been paid.
+  const owed      = (parseFloat(form.amount) || 0) + (parseFloat(form.broughtForward) || 0);
+  const remaining = owed - (parseFloat(form.amountPaid) || 0);
 
   async function handleSave() {
     setSaving(true);
     await onSave(expense.id, {
       description: form.description,
       amount:      parseFloat(form.amount) || 0,
+      broughtForward: parseFloat(form.broughtForward) || 0,
       amountPaid:  parseFloat(form.amountPaid) || 0,
       category:    form.category,
       dueDate:     form.dueDate,
@@ -141,7 +146,8 @@ function EditModal({ expense, onSave, onClose }: {
           </div>
 
           {[
-            { label: "Amount Due",    key: "amount",      type: "number" },
+            { label: "This Month's Charge", key: "amount",         type: "number" },
+            { label: "Past Due Balance",    key: "broughtForward", type: "number" },
             { label: "Amount Paid",   key: "amountPaid",  type: "number" },
             { label: "Category",      key: "category",    type: "text"   },
             { label: "Due Date",      key: "dueDate",     type: "date"   },
@@ -199,7 +205,8 @@ function EditModal({ expense, onSave, onClose }: {
 
         <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: `1px solid ${BORDER}`, background: IVORY }}>
           <div className="text-xs" style={{ color: WARM_GRAY, letterSpacing: "0.1em" }}>
-            REMAINING <span className="font-semibold ml-2" style={{ color: remaining > 0 ? MUTED_RED : MUTED_GRN }}>{fmt(remaining)}</span>
+            TOTAL OWED <span className="font-semibold ml-1.5 mr-4" style={{ color: "#111111" }}>{fmt(owed)}</span>
+            LEFT OVER <span className="font-semibold ml-1.5" style={{ color: remaining > 0 ? MUTED_RED : MUTED_GRN }}>{fmt(remaining)}</span>
           </div>
           <div className="flex gap-3">
             <button onClick={onClose} className="px-4 py-2 text-xs tracking-widest"
@@ -255,16 +262,27 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
         </span>
       </div>
 
-      {/* Amounts */}
-      <div className="grid grid-cols-3 divide-x divide-slate-100 text-center">
-        <div className="px-2 py-3">
-          <p className="text-xs text-slate-400 mb-0.5">Due</p>
+      {/* Amounts — four figures on a phone go 2×2 rather than in one cramped row,
+          so a four-digit total is never squeezed to three columns of a narrow screen. */}
+      <div className="grid grid-cols-2 text-center" style={{ borderTop: "1px solid #f1f5f9" }}>
+        <div className="px-2 py-3" style={{ borderRight: "1px solid #f1f5f9", borderBottom: "1px solid #f1f5f9" }}>
+          <p className="text-xs text-slate-400 mb-0.5">Total owed</p>
           <p className="text-sm font-mono font-semibold text-slate-700">{fmt(owedAmount(expense))}</p>
-          {(expense.broughtForward ?? 0) !== 0 && (
-            <p className="text-xs" style={{ color: "#8B2020" }}>{fmt(expense.amount)} + {fmt(expense.broughtForward ?? 0)} carried</p>
+          <p className="text-xs text-slate-400">{fmt(expense.amount)} this month</p>
+        </div>
+        <div className="px-2 py-3" style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <p className="text-xs text-slate-400 mb-0.5">Past due</p>
+          {isPayAsYouGo(expense) ? (
+            <p className="text-sm text-slate-300">pay to use</p>
+          ) : (
+            <p className="text-sm font-mono font-semibold"
+              style={{ color: (expense.broughtForward ?? 0) > 0 ? "#8B2020" : "#cbd5e1" }}>
+              {fmt(expense.broughtForward ?? 0)}
+            </p>
           )}
         </div>
-        <div className="px-2 py-3 cursor-pointer" onClick={() => { setEditPaid(true); setPaidVal(String(expense.amountPaid)); }}>
+        <div className="px-2 py-3 cursor-pointer" style={{ borderRight: "1px solid #f1f5f9" }}
+          onClick={() => { setEditPaid(true); setPaidVal(String(expense.amountPaid)); }}>
           <p className="text-xs text-slate-400 mb-0.5">Paid <span className="text-blue-400">✎</span></p>
           {editPaid ? (
             <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
@@ -409,10 +427,18 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
           ))}
           {filtered.length > 0 && (
             <div className="p-4 mt-2" style={{ background: headerColor }}>
-              <div className="grid grid-cols-3 text-center" style={{ color: headerTextColor ?? "#fff" }}>
-                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>OWED</p><p className="font-mono text-sm">{fmt(totalOwed)}</p></div>
-                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>PAID</p><p className="font-mono text-sm">{fmt(totalPaid)}</p></div>
-                <div><p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>LEFT OVER</p><p className="font-mono text-sm">{fmt(totalRemaining)}</p></div>
+              <div className="grid grid-cols-2 gap-y-3 text-center" style={{ color: headerTextColor ?? "#fff" }}>
+                {[
+                  { k: "TOTAL OWED", v: totalOwed },
+                  { k: "PAST DUE",   v: totalBrought },
+                  { k: "PAID",       v: totalPaid },
+                  { k: "LEFT OVER",  v: totalRemaining },
+                ].map(x => (
+                  <div key={x.k}>
+                    <p className="text-xs opacity-60 mb-0.5" style={{ letterSpacing: "0.1em" }}>{x.k}</p>
+                    <p className="font-mono text-sm">{fmt(x.v)}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -423,9 +449,12 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr style={{ background: headerColor }}>
-                {["Expense", "Category", "Due Date", "Owed", "Paid", "Left Over", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
+                {/* Total Owed − Paid = Left Over, straight across. Past Due is the
+                    slice of the total carried in from earlier months, broken out so
+                    it can be seen and corrected without doing the arithmetic. */}
+                {["Expense", "Category", "Due Date", "Total Owed", "Past Due", "Paid", "Left Over", ...(baseline ? ["On Target?"] : []), "Status", "Notes", ""].map((h, i) => (
                   <th key={i} className="px-3 py-3"
-                    style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 5 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
+                    style={{ color: headerTextColor ?? "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.06)", textAlign: i >= 3 && i <= 6 ? "right" : "left", fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}>
                     {h}
                   </th>
                 ))}
@@ -433,7 +462,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={baseline ? 10 : 9} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
+                <tr><td colSpan={baseline ? 11 : 10} className="px-4 py-10 text-center text-xs tracking-widest" style={{ color: "#BDBAB6", background: "#FAF9F6", letterSpacing: "0.2em" }}>NO ENTRIES</td></tr>
               )}
               {filtered.map((expense) => {
                 const status    = getStatus(expense);
@@ -505,16 +534,12 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                       )}
                     </td>
 
-                    {/* Owed — the total, with the split beneath. Both halves are still
-                        editable: the charge, and the balance carried in from last month. */}
+                    {/* Total Owed — the whole balance of the line: this month's charge
+                        plus anything past due. The charge sits underneath and stays
+                        editable, so the total is always the sum of two numbers you can
+                        change rather than a third to keep in step with them. */}
                     <td className="px-3 py-2.5 text-right" style={{ borderRight: `1px solid ${BORDER}` }}>
                       {isInline && inlineField === "amount" ? (
-                        <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
-                          onChange={e => setInlineValue(e.target.value)}
-                          onBlur={() => commitInline(expense)}
-                          onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
-                          className="text-right" style={{ width: 90, fontSize: 12 }} />
-                      ) : isInline && inlineField === "broughtForward" ? (
                         <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
                           onChange={e => setInlineValue(e.target.value)}
                           onBlur={() => commitInline(expense)}
@@ -525,22 +550,39 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                           <span className="font-mono text-xs" style={{ color: OBSIDIAN, fontWeight: 500 }}>
                             {saving === expense.id ? "…" : fmt(owedAmount(expense))}
                           </span>
-                          <span className="block text-xs mt-0.5" style={{ color: "#BDBAB6" }}>
-                            <button onClick={() => startInline(expense.id, "amount", String(expense.amount))}
-                              className="hover:opacity-60" style={{ borderBottom: `1px dashed ${BORDER}` }}>
-                              {fmt(expense.amount)}
-                            </button>
-                            {isPayAsYouGo(expense)
-                              ? <span style={{ color: "#D6D2CC" }}> · pay to use</span>
-                              : (expense.broughtForward ?? 0) !== 0
-                                ? <button onClick={() => startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0))}
-                                    className="hover:opacity-60" style={{ color: MUTED_RED, marginLeft: 4 }}>
-                                    + {fmt(expense.broughtForward ?? 0)} carried
-                                  </button>
-                                : <button onClick={() => startInline(expense.id, "broughtForward", "0")}
-                                    className="hover:opacity-60" style={{ color: "#D6D2CC", marginLeft: 4 }}>+ carried</button>}
-                          </span>
+                          <button onClick={() => startInline(expense.id, "amount", String(expense.amount))}
+                            className="block ml-auto text-xs mt-0.5 hover:opacity-60"
+                            style={{ color: "#BDBAB6", borderBottom: `1px dashed ${BORDER}` }}
+                            title="This month's charge — click to edit">
+                            {fmt(expense.amount)} this month
+                          </button>
                         </>
+                      )}
+                    </td>
+
+                    {/* Past Due — the balance carried in from earlier months, the part
+                        of the total that should have been settled already. Pay-to-use
+                        lines never carry one, so there is nothing to edit there. */}
+                    <td className="px-3 py-2.5 text-right" style={{ borderRight: `1px solid ${BORDER}`,
+                        cursor: isPayAsYouGo(expense) ? "default" : "pointer" }}
+                      onClick={() => { if (!isInline && !isPayAsYouGo(expense)) startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0)); }}>
+                      {isInline && inlineField === "broughtForward" ? (
+                        <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
+                          onChange={e => setInlineValue(e.target.value)}
+                          onBlur={() => commitInline(expense)}
+                          onKeyDown={e => { if (e.key === "Enter") commitInline(expense); if (e.key === "Escape") cancelInline(); }}
+                          className="w-24 px-2 py-0.5 text-right font-mono text-xs focus:outline-none"
+                          style={{ border: `1px solid ${GOLD}`, background: "#fff", color: OBSIDIAN }} />
+                      ) : isPayAsYouGo(expense) ? (
+                        <span className="text-xs" style={{ color: "#D6D2CC" }}
+                          title="Pay to use — this line is settled to be used, so it never carries a balance">
+                          pay to use
+                        </span>
+                      ) : (
+                        <span className="font-mono text-xs"
+                          style={{ color: (expense.broughtForward ?? 0) > 0 ? MUTED_RED : "#C8C4BF" }}>
+                          {saving === expense.id && inlineField === "broughtForward" ? "…" : fmt(expense.broughtForward ?? 0)}
+                        </span>
                       )}
                     </td>
 
@@ -647,10 +689,10 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                     {filtered.length} item{filtered.length !== 1 ? "s" : ""}
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalOwed)}</td>
-
+                  <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: totalBrought > 0 ? (headerTextColor ? "#8B2020" : "#fca5a5") : (headerTextColor ?? "rgba(255,255,255,0.35)"), borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalBrought)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ? "#15803d" : "#86efac", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalPaid)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold" style={{ color: headerTextColor ?? "#ffffff", borderRight: "1px solid rgba(255,255,255,0.08)" }}>{fmt(totalRemaining)}</td>
-                  <td colSpan={baseline ? 5 : 4} />
+                  <td colSpan={baseline ? 4 : 3} />
                 </tr>
               </tfoot>
             )}
