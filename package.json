@@ -10,7 +10,8 @@
     "db:push": "prisma db push",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "sheet": "node scripts/pay-window-sheet.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
