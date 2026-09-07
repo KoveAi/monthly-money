@@ -614,9 +614,8 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                           pay to use
                         </span>
                       ) : !carriesForward(expense) ? (
-                        <span className="text-xs" style={{ color: "#D6D2CC" }}
-                          title="Not recurring — a one-off has no next month to carry into">
-                          one-off
+                        <span className="text-xs" style={{ color: "#D6D2CC" }} title={carryReason(expense)}>
+                          {sectionOf(expense) === "income" ? "—" : "one-off"}
                         </span>
                       ) : (
                         <span className="font-mono text-xs"

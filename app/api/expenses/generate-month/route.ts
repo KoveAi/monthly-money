@@ -83,7 +83,31 @@ export async function POST(request: NextRequest) {
       .map(e => ({ e, remaining: rollingRemaining(e) }))
       .filter(x => x.remaining > 0);
 
-    if (monthlyTemplate.length === 0 && annualDue.length === 0 && lienCarry.length === 0) {
+    // ── 2c. Income: the names come over, the figures do not ────────────────
+    // A household's income sources are steady and their amounts are not. The month
+    // opens with the same list of names at zero, ready to be filled in as money
+    // lands — copying last month's figure would quietly plant a forecast nobody
+    // entered and make the month look funded before a penny of it arrived.
+    //
+    // Every income row comes over, whatever its recurring flag, because a name
+    // missing from the list is the thing this is meant to prevent. To stop one
+    // recurring, delete it: next month is always copied from the month before, so
+    // a row deleted once never returns.
+    const latestIncomeMonth = await prisma.expense.findFirst({
+      where: { frequency: "income", monthKey: { lt: targetMonthKey } },
+      orderBy: { monthKey: "desc" },
+      select: { monthKey: true },
+    });
+
+    const incomeTemplate = latestIncomeMonth
+      ? await prisma.expense.findMany({
+          where: { frequency: "income", monthKey: latestIncomeMonth.monthKey },
+          orderBy: { dueDate: "asc" },
+        })
+      : [];
+
+    if (monthlyTemplate.length === 0 && annualDue.length === 0 &&
+        lienCarry.length === 0 && incomeTemplate.length === 0) {
       return NextResponse.json({ error: "No recurring expenses found to copy." }, { status: 404 });
     }
 
@@ -154,13 +178,37 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    const created = await prisma.$transaction([...monthlyRows, ...annualRows, ...lienRows]);
+    // ── 6. Carry the income NAMES over, at zero ────────────────────────────
+    const incomeRows = incomeTemplate.map(e => {
+      const origDay = new Date(e.dueDate).getUTCDate();
+      const safeDay = Math.min(origDay, new Date(targetYear, targetMonth, 0).getDate());
+      return prisma.expense.create({
+        data: {
+          description: e.description,
+          amount: 0,
+          broughtForward: 0,
+          amountPaid: 0,
+          category: e.category,
+          dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, safeDay)),
+          isRecurring: true,
+          frequency: "income",
+          status: null,
+          notes: e.notes,
+          monthKey: targetMonthKey,
+        },
+      });
+    });
+
+    const created = await prisma.$transaction([...monthlyRows, ...annualRows, ...lienRows, ...incomeRows]);
 
     const carried = lienCarry.reduce((s, x) => s + x.remaining, 0);
     const broughtOver = monthlyTemplate.reduce((t, e) => t + rollingRemaining(e), 0)
                       + annualDue.reduce((t, e) => t + annualCarry(e), 0);
     const lienNote = lienRows.length > 0
       ? ` + ${lienRows.length} obligation balance${lienRows.length === 1 ? "" : "s"} ($${carried.toFixed(2)} outstanding)`
+      : "";
+    const incomeNote = incomeRows.length > 0
+      ? ` + ${incomeRows.length} income source${incomeRows.length === 1 ? "" : "s"} (names only, amounts blank)`
       : "";
 
     return NextResponse.json({
@@ -171,8 +219,9 @@ export async function POST(request: NextRequest) {
       carriedForward: broughtOver,
       liens: lienRows.length,
       lienBalance: carried,
+      income: incomeRows.length,
       total: created.length,
-      message: `Generated ${monthlyTemplate.length} monthly + ${annualDue.length} annual${lienNote} = ${created.length} entries for ${targetMonthKey}`
+      message: `Generated ${monthlyTemplate.length} monthly + ${annualDue.length} annual${lienNote}${incomeNote} = ${created.length} entries for ${targetMonthKey}`
              + (broughtOver > 0 ? ` · $${broughtOver.toFixed(2)} of unpaid balances carried forward` : ""),
     });
   } catch (error) {

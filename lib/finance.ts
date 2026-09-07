@@ -98,6 +98,7 @@ export function isPayAsYouGo(e: Classifiable): boolean {
  * full until it clears — and pay-to-use buys the month and accrues nothing.
  */
 export function carriesByDefault(e: Classifiable & { isRecurring?: boolean }): boolean {
+  if (sectionOf(e) === "income") return false;
   if (isPayAsYouGo(e)) return false;
   if (sectionOf(e) === "liens") return true;
   return e.isRecurring !== false;
@@ -105,6 +106,7 @@ export function carriesByDefault(e: Classifiable & { isRecurring?: boolean }): b
 
 /** Why a line carries, or does not, when nobody has said otherwise. */
 export function carryReason(e: Classifiable & { isRecurring?: boolean }): string {
+  if (sectionOf(e) === "income") return "income — a receipt, not a debt";
   if (isPayAsYouGo(e)) return "pay to use — buys the month, accrues nothing";
   if (sectionOf(e) === "liens") return "an obligation — carried until it clears";
   return e.isRecurring !== false ? "recurring — next month's bill inherits it"
