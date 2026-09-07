@@ -71,6 +71,21 @@ const monthName = (mk: string, style: "long" | "short") => {
 /** Which window a date falls in: the 5th–19th, or the 20th through the 4th. */
 export const windowOfDay = (day: number): PayWindow => (day >= 5 && day < 20 ? "a" : "b");
 
+/**
+ * Which days of a single month belong to a window, for a view holding one month.
+ *
+ * The 5th–20th run reaches back to the 1st. A bill dated the 2nd and still unpaid
+ * on the 6th is this run's problem whatever its label says, and money that landed
+ * on the 1st is money this run has to pay with. The 20th–5th run's 1st–4th tail
+ * falls in the *following* month, so inside one month it is the 20th onward — and
+ * every row then lands in exactly one window, counted once.
+ *
+ * The dashboard's pay-period tabs use this, so a tab and the sheet its own PRINT
+ * button produces cannot disagree about what falls in the window.
+ */
+export const inWindowMonth = (day: number, win: PayWindow): boolean =>
+  win === "a" ? day <= 19 : day >= 20;
+
 interface Row { date: string; bill: string; cat: string; owed: number; paid: number; left: number; status: string }
 
 export function buildPaySheet({ entries, monthKey, window: win, today }: PaySheetInput): PaySheet {

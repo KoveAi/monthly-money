@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { TrimPlan } from "@/components/TrimPlan";
 import { AdvisorPanel } from "@/components/AdvisorPanel";
-import { buildPaySheet } from "@/lib/paySheet";
+import { buildPaySheet, inWindowMonth } from "@/lib/paySheet";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, budgetAmount, owedAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -331,13 +331,17 @@ export default function DashboardPage() {
   // Bills are settled against two pay windows rather than a calendar month, so the
   // due date decides which window a bill belongs to. Change the date on a row and
   // it moves between the tabs on its own — no second field to keep in step.
+  //
+  // The rule lives in lib/paySheet.ts, shared with the printable sheet. The tab was
+  // starting at the 5th while the sheet its own button prints started at the 1st,
+  // so income banked on the 1st and 3rd showed on the sheet but not on the tab.
   function periodOf(e: Expense): "a" | "b" {
     const day = new Date(e.dueDate).getUTCDate();
-    return day >= 5 && day < 20 ? "a" : "b";
+    return inWindowMonth(day, "a") ? "a" : "b";
   }
   const PERIODS = {
-    "a": { label: "5th \u2013 20th", note: "due on or after the 5th, before the 20th" },
-    "b": { label: "20th \u2013 5th", note: "due on or after the 20th, through the 4th" },
+    "a": { label: "5th \u2013 20th", note: "through the 19th, with anything still open from the 1st" },
+    "b": { label: "20th \u2013 5th", note: "the 20th onward \u2014 its 1st\u20134th tail lands in next month" },
   } as const;
 
   // ── Stats ──────────────────────────────────────────────────────────────────
