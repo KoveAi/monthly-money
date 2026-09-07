@@ -331,10 +331,10 @@ export default function DashboardPage() {
   // Bills are settled against two pay windows rather than a calendar month, so the
   // due date decides which window a bill belongs to. Change the date on a row and
   // it moves between the tabs on its own — no second field to keep in step.
-  const periodOf = (e: Expense): "a" | "b" => {
+  function periodOf(e: Expense): "a" | "b" {
     const day = new Date(e.dueDate).getUTCDate();
     return day >= 5 && day < 20 ? "a" : "b";
-  };
+  }
   const PERIODS = {
     "a": { label: "5th \u2013 20th", note: "due on or after the 5th, before the 20th" },
     "b": { label: "20th \u2013 5th", note: "due on or after the 20th, through the 4th" },
@@ -657,6 +657,18 @@ export default function DashboardPage() {
                   className="px-5 py-2 text-xs tracking-widest transition-all"
                   style={{ background: "transparent", color: "rgba(255,255,255,0.7)", border: `1px solid rgba(255,255,255,0.2)`, letterSpacing: "0.12em" }}>
                   MONTHLY VIEW
+                </button>
+                <button onClick={() => {
+                    // The local day, not a UTC round trip — on the evening of the
+                    // 19th, UTC is already the 20th and would open the wrong window.
+                    const d = new Date().getDate();
+                    openPaySheet(d >= 5 && d < 20 ? "a" : "b");
+                  }}
+                  className="px-5 py-2 text-xs tracking-widest transition-all"
+                  style={{ background: "transparent", color: GOLD, border: `1px solid ${GOLD}`,
+                           borderRadius: 999, letterSpacing: "0.12em", fontWeight: 600 }}
+                  title="Print the bill sheet for the pay window we are in">
+                  ↓ PAY SHEET
                 </button>
                 <button onClick={handleGenerate} disabled={generating}
                   className="px-5 py-2 text-xs tracking-widest transition-all disabled:opacity-50"
