@@ -140,8 +140,14 @@ export function buildPaySheet({ entries, monthKey, window: win, today }: PayShee
       .sort((a, b) => a.date.localeCompare(b.date) || b.owed - a.owed),
   })).filter(s => s.rows.length > 0);
 
-  const from = win === "a" ? `${monthKey}-05` : `${monthKey}-20`;
-  const to   = win === "a" ? `${monthKey}-20` : `${next}-04`;
+  // Income covers exactly the stretch the bills cover, taken from the stretches
+  // themselves rather than restated. The two were written separately and drifted:
+  // bills reached back to the 1st while income started at the 5th, so a sheet
+  // headed "September 1–19" quietly left out money that landed on the 1st.
+  const first = stretches[0];
+  const last  = stretches[stretches.length - 1];
+  const from  = `${first.monthKey}-01`;
+  const to    = `${last.monthKey}-${pad(last.to)}`;
   const income = entries
     .filter(e => e.frequency === "income" && !isPaused(e))
     .filter(e => { const d = String(e.dueDate).slice(0, 10); return d >= from && d <= to; })
@@ -289,7 +295,8 @@ export function buildPaySheet({ entries, monthKey, window: win, today }: PayShee
   <p class="band-note">${esc(s.note)} Ordered by due date.</p>
   ${table(s.rows, `Subtotal — ${s.label}`)}`).join("")}
 
-  <div class="band"><span class="num">${sections.length + 1} &middot;</span> Income landing in the same stretch</div>
+  <div class="band"><span class="num">${sections.length + 1} &middot;</span> Income landing in the same stretch
+    <span class="count">${esc(from.slice(5).replace("-", "/"))} &ndash; ${esc(to.slice(5).replace("-", "/"))}</span></div>
   ${income.length
     ? table(income, "Total income expected")
     : `<p class="empty"><strong>No income entries exist for this window.</strong>
