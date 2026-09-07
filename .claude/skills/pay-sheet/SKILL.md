@@ -8,6 +8,16 @@ description: Produce the printable one-page Stone Brook pay-window sheet — the
 One page listing every bill still owed in a pay window, ordered by due date, with a
 tick box and a ruled note column. Written to be printed and worked in pen.
 
+## The quickest route is in the app
+
+Either pay-period tab carries a **↓ PRINT SHEET** pill. It opens the same sheet in a
+new tab and raises the print dialog, where *Save as PDF* produces the identical file.
+Suggest that first when the user is already at the dashboard — it needs nothing
+installed and no terminal.
+
+The script below is for when they want the PDF written straight to disk, an older
+month, or a sheet without opening the app.
+
 ## Run it
 
 ```bash
@@ -49,10 +59,11 @@ wrapper) at the `artifact` path it prints, which the Artifact tool takes directl
   tomorrow's bills "Due Today" anywhere west of UTC. Harmless on a dashboard,
   wrong on a sheet about when to pay.
 
-The script compiles `lib/finance.ts` and imports it rather than reimplementing
-`effectiveRemaining`, `sectionOf` and `isPaused`. If those rules change, the sheet
-follows automatically — a sheet that disagreed with the dashboard would be worse
-than no sheet.
+The sheet is built by `lib/paySheet.ts` — one generator, called by both the pill in
+the dashboard and this script, so the two cannot drift. It imports
+`effectiveRemaining`, `sectionOf` and `isPaused` from `lib/finance.ts` rather than
+reimplementing them, so a change to the money rules reaches the sheet automatically.
+Edit the template there, never in the script.
 
 ## If it does not fit on one page
 

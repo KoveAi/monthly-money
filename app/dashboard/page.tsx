@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { TrimPlan } from "@/components/TrimPlan";
 import { AdvisorPanel } from "@/components/AdvisorPanel";
+import { buildPaySheet } from "@/lib/paySheet";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, budgetAmount, owedAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -492,6 +493,23 @@ export default function DashboardPage() {
     });
   }
 
+  function openPaySheet(period: "a" | "b") {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const sheet = buildPaySheet({ entries: allExpenses, monthKey, window: period, today });
+
+    const w = window.open("", "_blank");
+    if (!w) { alert("Allow pop-ups for this site to open the sheet."); return; }
+    w.document.write(sheet.document);
+    w.document.close();
+    w.document.title = sheet.summary.slug;
+    // Wait for the web fonts, or the first print lays out in a fallback face.
+    const print = () => w.setTimeout(() => w.print(), 350);
+    if (w.document.readyState === "complete") print();
+    else w.addEventListener("load", print);
+  }
+
   function renderPeriod(period: "a" | "b") {
     const inWindow = (e: Expense) => periodOf(e) === period;
 
@@ -530,10 +548,19 @@ export default function DashboardPage() {
 
     return (
       <div className="py-2">
-        <p className="text-xs mb-6" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>
-          {PERIODS[period].label.toUpperCase()} — {fmtMonth(monthKey).toUpperCase()}
-          <span style={{ color: "#BDBAB6" }}> · {PERIODS[period].note}</span>
-        </p>
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <p className="text-xs" style={{ color: WARM_GRAY, letterSpacing: "0.2em" }}>
+            {PERIODS[period].label.toUpperCase()} — {fmtMonth(monthKey).toUpperCase()}
+            <span style={{ color: "#BDBAB6" }}> · {PERIODS[period].note}</span>
+          </p>
+          <button onClick={() => openPaySheet(period)}
+            className="ml-auto px-4 py-1.5 text-xs whitespace-nowrap transition-opacity hover:opacity-75"
+            style={{ background: OBSIDIAN, color: GOLD, border: `1px solid ${GOLD}`,
+                     borderRadius: 999, letterSpacing: "0.14em", fontWeight: 600 }}
+            title="Opens the printable sheet — print or save as PDF from there">
+            ↓ PRINT SHEET
+          </button>
+        </div>
 
         {/* Can this window's income cover this window's bills? */}
         <div className="mb-6 px-5 py-4" style={{
