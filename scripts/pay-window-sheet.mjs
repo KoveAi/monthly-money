@@ -98,7 +98,7 @@ writeFileSync(htmlOut, sheet.document);
 writeFileSync(join(BUILD, "artifact.html"), sheet.fragment);
 
 console.log(`\nStone Brook — ${s.title}`);
-console.log(`  ${s.bills} bills, ${money(s.owed)} still owed`);
+console.log(`  ${s.bills} bills · owed ${money(s.owed)} · paid ${money(s.paid)} · left ${money(s.left)}`);
 console.log(`  overdue ${money(s.overdue)} · due today ${money(s.dueToday)} · ` +
             `next 3 days ${money(s.upcoming)} · rest ${money(s.scheduled)}`);
 console.log(`  income landing: ${s.incomeSources ? `${money(s.income)} (${s.incomeSources} sources)` : "none recorded"}`);
