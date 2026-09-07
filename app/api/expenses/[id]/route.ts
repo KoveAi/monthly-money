@@ -16,6 +16,12 @@ export async function PUT(
     if ("amount" in body) updateData.amount = parseFloat(body.amount);
     if ("amountPaid" in body) updateData.amountPaid = parseFloat(body.amountPaid);
     if ("broughtForward" in body) updateData.broughtForward = parseFloat(body.broughtForward) || 0;
+    // Tri-state: true, false, or null for "decide automatically". Anything else is
+    // ignored rather than coerced, so a stray value cannot silently pin the choice.
+    if ("carriesOver" in body) {
+      updateData.carriesOver =
+        body.carriesOver === true ? true : body.carriesOver === false ? false : null;
+    }
     if ("category" in body) updateData.category = body.category;
     if ("dueDate" in body) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : undefined;
     if ("isRecurring" in body) updateData.isRecurring = body.isRecurring;

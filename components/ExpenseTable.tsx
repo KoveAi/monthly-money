@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { computeStatus, ALL_STATUSES } from "@/lib/status";
-import { effectivePaid, effectiveRemaining, owedAmount, isPayAsYouGo, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
+import { effectivePaid, effectiveRemaining, owedAmount, isPayAsYouGo, carriesForward, carryReason, sectionOf, movePatch, MOVE_OPTIONS, type MoveTarget } from "@/lib/finance";
 import { verdictFor, type Baseline } from "@/lib/advisor";
 
 export interface Expense {
@@ -13,6 +13,8 @@ export interface Expense {
   amountPaid: number;
   /** Unpaid balance rolled in from last month. */
   broughtForward?: number;
+  /** Does an unpaid balance here roll into next month? Null = decide automatically. */
+  carriesOver?: boolean | null;
   category: string;
   dueDate: string;
   isRecurring: boolean;
@@ -89,6 +91,7 @@ function EditModal({ expense, onSave, onClose }: {
     notes:        expense.notes ?? "",
     isRecurring:  expense.isRecurring,
     frequency:    expense.frequency,
+    carriesOver:  expense.carriesOver ?? null,
   });
   const [saving, setSaving] = useState(false);
   // Same arithmetic as the table: total owed is the charge plus the past due
@@ -111,6 +114,7 @@ function EditModal({ expense, onSave, onClose }: {
       notes:       form.notes || null,
       isRecurring: form.isRecurring,
       frequency:   form.frequency,
+      carriesOver: form.carriesOver,
     });
     setSaving(false);
     onClose();
@@ -178,6 +182,33 @@ function EditModal({ expense, onSave, onClose }: {
               onChange={e => setForm({ ...form, notes: e.target.value })} />
           </div>
 
+          {/* Carry-over is a decision about the bill, not something to infer from
+              whether it is marked recurring: a one-off can still leave a debt, and a
+              recurring line can be settled fresh every month. Untouched, it follows
+              the automatic rule and the row beneath says which way that falls. */}
+          <div className="col-span-2 px-4 py-3" style={{ background: IVORY, border: `1px solid ${BORDER}` }}>
+            <label className="flex items-center gap-2.5 text-xs cursor-pointer" style={{ color: OBSIDIAN, letterSpacing: "0.1em" }}>
+              <input type="checkbox" className="w-3.5 h-3.5"
+                checked={carriesForward({ ...expense, ...form, carriesOver: form.carriesOver })}
+                onChange={e => setForm({ ...form, carriesOver: e.target.checked })} />
+              CARRIES OVER TO NEXT MONTH
+            </label>
+            <p className="text-xs mt-1.5 pl-6" style={{ color: WARM_GRAY }}>
+              {form.carriesOver === null
+                ? <>Following the automatic rule: {carryReason({ ...expense, ...form })}.</>
+                : form.carriesOver
+                  ? <>Anything unpaid here lands in next month&rsquo;s <strong style={{ fontWeight: 600 }}>Past Due</strong>.</>
+                  : <>Anything unpaid here is settled where it stands and does not follow into next month.</>}
+              {form.carriesOver !== null && (
+                <button type="button" className="ml-2 hover:opacity-60"
+                  style={{ color: GOLD, borderBottom: `1px dashed ${GOLD}` }}
+                  onClick={() => setForm({ ...form, carriesOver: null })}>
+                  use the automatic rule
+                </button>
+              )}
+            </p>
+          </div>
+
           <div className="col-span-2 flex flex-wrap items-center gap-6 pt-1">
             <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: WARM_GRAY, letterSpacing: "0.1em" }}>
               <input type="checkbox" checked={form.isRecurring} className="w-3.5 h-3.5"
@@ -231,6 +262,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
   onMove?: (id: string, targetSection: string) => Promise<void>;
 }) {
   const status    = computeStatus({ status: expense.status, paymentDate: expense.paymentDate, dueDate: expense.dueDate, amountPaid: expense.amountPaid, amount: expense.amount });
+  const paid      = effectivePaid(expense);
   const remaining = effectiveRemaining(expense);
   const [editPaid, setEditPaid] = useState(false);
   const [paidVal, setPaidVal]   = useState(String(expense.amountPaid));
@@ -274,6 +306,8 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
           <p className="text-xs text-slate-400 mb-0.5">Past due</p>
           {isPayAsYouGo(expense) ? (
             <p className="text-sm text-slate-300">pay to use</p>
+          ) : !carriesForward(expense) ? (
+            <p className="text-sm text-slate-300">one-off</p>
           ) : (
             <p className="text-sm font-mono font-semibold"
               style={{ color: (expense.broughtForward ?? 0) > 0 ? "#8B2020" : "#cbd5e1" }}>
@@ -282,7 +316,7 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
           )}
         </div>
         <div className="px-2 py-3 cursor-pointer" style={{ borderRight: "1px solid #f1f5f9" }}
-          onClick={() => { setEditPaid(true); setPaidVal(String(expense.amountPaid)); }}>
+          onClick={() => { setEditPaid(true); setPaidVal(String(paid)); }}>
           <p className="text-xs text-slate-400 mb-0.5">Paid <span className="text-blue-400">✎</span></p>
           {editPaid ? (
             <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
@@ -294,8 +328,8 @@ function MobileCard({ expense, onEdit, onDelete, onUpdate, onMove }: {
                 style={{ border: "2px solid #2563eb" }} />
             </div>
           ) : (
-            <p className="text-sm font-mono font-semibold" style={{ color: expense.amountPaid > 0 ? "#16a34a" : "#94a3b8" }}>
-              {saving ? "…" : fmt(expense.amountPaid)}
+            <p className="text-sm font-mono font-semibold" style={{ color: paid > 0 ? "#16a34a" : "#94a3b8" }}>
+              {saving ? "…" : fmt(paid)}
             </p>
           )}
         </div>
@@ -349,7 +383,6 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
 
   const filtered = filterStatus === "All" ? expenses : expenses.filter(e => getStatus(e) === filterStatus);
 
-  const totalAmount    = filtered.reduce((s, e) => s + e.amount, 0);
   const totalBrought   = filtered.reduce((s, e) => s + (e.broughtForward ?? 0), 0);
   const totalOwed      = filtered.reduce((s, e) => s + owedAmount(e), 0);
   const totalPaid      = filtered.reduce((s, e) => s + effectivePaid(e), 0);
@@ -391,7 +424,6 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
     setInlineId(null); setInlineField(null); setSaving(null);
   }
   const cancelInline = () => { setInlineId(null); setInlineField(null); };
-  const COL = { borderRight: "1px solid #e2e8f0" };
 
   return (
     <>
@@ -466,6 +498,7 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
               )}
               {filtered.map((expense) => {
                 const status    = getStatus(expense);
+                const paid      = effectivePaid(expense);
                 const remaining = effectiveRemaining(expense);
                 const isInline  = inlineId === expense.id;
                 const OBSIDIAN = "#111111", GOLD = "#B8976A", BORDER = "#E8E3DC", WARM_GRAY = "#6B6460";
@@ -561,11 +594,13 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                     </td>
 
                     {/* Past Due — the balance carried in from earlier months, the part
-                        of the total that should have been settled already. Pay-to-use
-                        lines never carry one, so there is nothing to edit there. */}
+                        of the total that should have been settled already. Only lines
+                        that actually carry can hold one: a pay-to-use subscription buys
+                        the month and accrues nothing, and a one-off has no next month to
+                        carry into. Both say so rather than showing an editable zero. */}
                     <td className="px-3 py-2.5 text-right" style={{ borderRight: `1px solid ${BORDER}`,
-                        cursor: isPayAsYouGo(expense) ? "default" : "pointer" }}
-                      onClick={() => { if (!isInline && !isPayAsYouGo(expense)) startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0)); }}>
+                        cursor: carriesForward(expense) ? "pointer" : "default" }}
+                      onClick={() => { if (!isInline && carriesForward(expense)) startInline(expense.id, "broughtForward", String(expense.broughtForward ?? 0)); }}>
                       {isInline && inlineField === "broughtForward" ? (
                         <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
                           onChange={e => setInlineValue(e.target.value)}
@@ -578,6 +613,11 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                           title="Pay to use — this line is settled to be used, so it never carries a balance">
                           pay to use
                         </span>
+                      ) : !carriesForward(expense) ? (
+                        <span className="text-xs" style={{ color: "#D6D2CC" }}
+                          title="Not recurring — a one-off has no next month to carry into">
+                          one-off
+                        </span>
                       ) : (
                         <span className="font-mono text-xs"
                           style={{ color: (expense.broughtForward ?? 0) > 0 ? MUTED_RED : "#C8C4BF" }}>
@@ -586,9 +626,13 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                       )}
                     </td>
 
-                    {/* Amount Paid */}
+                    {/* Amount Paid — what the row actually counts as settled, not the
+                        raw field: marking a bill Paid from the status dropdown settles
+                        it in full without touching amountPaid, and showing the bare
+                        field there left the row not adding up across itself. Clicking
+                        still edits the field, seeded with the figure on screen. */}
                     <td className="px-3 py-2.5 text-right cursor-pointer" style={{ borderRight: `1px solid ${BORDER}` }}
-                      onClick={() => !isInline && startInline(expense.id, "amountPaid", String(expense.amountPaid))}>
+                      onClick={() => !isInline && startInline(expense.id, "amountPaid", String(paid))}>
                       {isInline && inlineField === "amountPaid" ? (
                         <input ref={inputRef} type="number" step="0.01" min="0" value={inlineValue} autoFocus
                           onChange={e => setInlineValue(e.target.value)}
@@ -597,8 +641,8 @@ export function ExpenseTable({ expenses, onUpdate, onDelete, headerColor = "#0d2
                           className="w-24 px-2 py-0.5 text-right font-mono text-xs focus:outline-none"
                           style={{ border: `1px solid ${GOLD}`, background: "#fff", color: OBSIDIAN }} />
                       ) : (
-                        <span className="font-mono text-xs" style={{ color: expense.amountPaid > 0 ? MUTED_GRN : "#C8C4BF" }}>
-                          {saving === expense.id && inlineField === "amountPaid" ? "…" : fmt(expense.amountPaid)}
+                        <span className="font-mono text-xs" style={{ color: paid > 0 ? MUTED_GRN : "#C8C4BF" }}>
+                          {saving === expense.id && inlineField === "amountPaid" ? "…" : fmt(paid)}
                         </span>
                       )}
                     </td>

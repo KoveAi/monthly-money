@@ -43,6 +43,27 @@ export async function POST(request: NextRequest) {
       return month === targetMonth;
     });
 
+    // The template above is the EARLIEST instance of each annual bill — the right
+    // source for its amount and due date, the wrong one for what is still owed on
+    // it. Arrears come from the most recent instance instead; read off the template
+    // they would carry a balance from years ago into the new month.
+    const annualHistory = annualDue.length
+      ? await prisma.expense.findMany({
+          where: {
+            frequency: "annual",
+            monthKey: { lt: targetMonthKey },
+            description: { in: annualDue.map(e => e.description) },
+          },
+          orderBy: { monthKey: "asc" },
+        })
+      : [];
+    const latestAnnual = new Map<string, (typeof annualHistory)[number]>();
+    for (const e of annualHistory) latestAnnual.set(e.description, e); // ascending, so last wins
+    const annualCarry = (e: { description: string }) => {
+      const latest = latestAnnual.get(e.description);
+      return latest ? rollingRemaining(latest) : 0;
+    };
+
     // ── 2b. Liens & obligations: carry the OUTSTANDING BALANCE forward ─────
     // These are balances, not monthly bills, so they are not copied at face value
     // like a recurring charge. Each month opens with whatever is still owed, and a
@@ -78,6 +99,7 @@ export async function POST(request: NextRequest) {
           description: e.description,
           amount: e.amount,
           broughtForward: rollingRemaining(e),
+          carriesOver: e.carriesOver,
           amountPaid: 0,
           category: e.category,
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, safeDay)),
@@ -96,7 +118,8 @@ export async function POST(request: NextRequest) {
         data: {
           description: e.description,
           amount: e.amount,
-          broughtForward: rollingRemaining(e),
+          broughtForward: annualCarry(e),
+          carriesOver: e.carriesOver,
           amountPaid: 0,
           category: e.category,
           dueDate: new Date(Date.UTC(targetYear, targetMonth - 1, origDay)),
@@ -134,7 +157,8 @@ export async function POST(request: NextRequest) {
     const created = await prisma.$transaction([...monthlyRows, ...annualRows, ...lienRows]);
 
     const carried = lienCarry.reduce((s, x) => s + x.remaining, 0);
-    const broughtOver = [...monthlyTemplate, ...annualDue].reduce((t, e) => t + rollingRemaining(e), 0);
+    const broughtOver = monthlyTemplate.reduce((t, e) => t + rollingRemaining(e), 0)
+                      + annualDue.reduce((t, e) => t + annualCarry(e), 0);
     const lienNote = lienRows.length > 0
       ? ` + ${lienRows.length} obligation balance${lienRows.length === 1 ? "" : "s"} ($${carried.toFixed(2)} outstanding)`
       : "";
@@ -144,7 +168,7 @@ export async function POST(request: NextRequest) {
       monthKey: targetMonthKey,
       monthly: monthlyTemplate.length,
       annual: annualDue.length,
-      carriedForward: monthlyTemplate.reduce((t, e) => t + rollingRemaining(e), 0),
+      carriedForward: broughtOver,
       liens: lienRows.length,
       lienBalance: carried,
       total: created.length,

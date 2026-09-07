@@ -90,9 +90,48 @@ export function isPayAsYouGo(e: Classifiable): boolean {
   return !ACCRUING_BUSINESS.some(k => name.includes(k));
 }
 
-/** What actually rolls into next month — nothing, for a pay-to-use line. */
-export function rollingRemaining(e: Settleable & Classifiable & { status: string | null }): number {
-  return isPayAsYouGo(e) ? 0 : effectiveRemaining(e);
+/**
+ * What a line would do left to itself. A one-off does not carry: there is no next
+ * instance of it to carry into, so an unpaid remainder is settled where it stands
+ * rather than following the household into a month the bill never appears in.
+ * Obligations are the exception — a lien is a balance by definition, carried in
+ * full until it clears — and pay-to-use buys the month and accrues nothing.
+ */
+export function carriesByDefault(e: Classifiable & { isRecurring?: boolean }): boolean {
+  if (isPayAsYouGo(e)) return false;
+  if (sectionOf(e) === "liens") return true;
+  return e.isRecurring !== false;
+}
+
+/** Why a line carries, or does not, when nobody has said otherwise. */
+export function carryReason(e: Classifiable & { isRecurring?: boolean }): string {
+  if (isPayAsYouGo(e)) return "pay to use — buys the month, accrues nothing";
+  if (sectionOf(e) === "liens") return "an obligation — carried until it clears";
+  return e.isRecurring !== false ? "recurring — next month's bill inherits it"
+                                 : "not recurring — no next month to carry into";
+}
+
+/**
+ * Whether an unpaid balance on this line rolls into next month.
+ *
+ * The rule above decides it unless someone has said otherwise on the bill itself:
+ * a bill can be a one-off that still leaves a debt, or recurring and settled fresh
+ * each month, and only the household knows which. An explicit choice always wins.
+ */
+export function carriesForward(
+  e: Classifiable & { isRecurring?: boolean; carriesOver?: boolean | null },
+): boolean {
+  if (e.carriesOver === true || e.carriesOver === false) return e.carriesOver;
+  return carriesByDefault(e);
+}
+
+/** What actually rolls into next month — nothing, for a line that does not carry. */
+export function rollingRemaining(
+  e: Settleable & Classifiable & {
+    status: string | null; isRecurring?: boolean; carriesOver?: boolean | null;
+  },
+): number {
+  return carriesForward(e) ? effectiveRemaining(e) : 0;
 }
 
 /**

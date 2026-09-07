@@ -14,6 +14,10 @@ model Expense {
   amountPaid     Float     @default(0)
   // Unpaid balance rolled in from the previous month.
   broughtForward Float     @default(0)
+  // Whether an unpaid balance on this line rolls into next month. Null means
+  // "decide automatically" — recurring bills carry, one-offs and pay-to-use
+  // subscriptions do not. Set true or false from the edit dialog to overrule that.
+  carriesOver    Boolean?
   category       String
   dueDate        DateTime
   isRecurring    Boolean   @default(false)
