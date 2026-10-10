@@ -1,81 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiError, InvalidInput, privateJson, readJsonObject, requireHousehold } from "@/lib/api-security";
+import { expenseCreateData } from "@/lib/expense-data";
+import { isMonthKey } from "@/lib/expense-validation";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const monthKey = searchParams.get("monthKey");
-  const category = searchParams.get("category");
-  // status filter handled client-side via computed status
-
-  const where: Record<string, unknown> = {};
-  if (monthKey) where.monthKey = monthKey;
-  if (category) where.category = category;
-
+  const denied = await requireHousehold(request);
+  if (denied) return denied;
   try {
+    const monthKey = request.nextUrl.searchParams.get("monthKey");
+    const category = request.nextUrl.searchParams.get("category");
+    if (monthKey !== null && !isMonthKey(monthKey)) throw new InvalidInput("monthKey must be YYYY-MM.");
+    if (category !== null && category.length > 300) throw new InvalidInput("Category is too long.");
     const expenses = await prisma.expense.findMany({
-      where,
+      where: { ...(monthKey ? { monthKey } : {}), ...(category ? { category } : {}) },
       orderBy: [{ sortOrder: "asc" }, { dueDate: "asc" }, { description: "asc" }],
     });
-    return NextResponse.json(expenses);
-  } catch (error) {
-    console.error("GET /api/expenses error:", error);
-    return NextResponse.json({ error: "Failed to fetch expenses" }, { status: 500 });
-  }
+    return privateJson(expenses);
+  } catch (error) { return apiError(error, "Failed to fetch expenses."); }
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireHousehold(request);
+  if (denied) return denied;
   try {
-    const body = await request.json();
-    const {
-      description,
-      amount,
-      amountPaid = 0,
-      broughtForward = 0,
-      category,
-      dueDate,
-      isRecurring = false,
-      carriesOver = null,
-      frequency = "monthly",
-      status = null,
-      paymentDate = null,
-      paymentType = null,
-      notes = null,
-      remainingName = null,
-      remainingType = null,
-      monthKey,
-    } = body;
-
-    if (!description || amount === undefined || !category || !dueDate || !monthKey) {
-      return NextResponse.json(
-        { error: "Missing required fields: description, amount, category, dueDate, monthKey" },
-        { status: 400 }
-      );
-    }
-
-    const expense = await prisma.expense.create({
-      data: {
-        description,
-        amount: parseFloat(amount),
-        amountPaid: parseFloat(amountPaid),
-        broughtForward: parseFloat(broughtForward) || 0,
-        category,
-        dueDate: new Date(dueDate),
-        isRecurring,
-        carriesOver: carriesOver === true ? true : carriesOver === false ? false : null,
-        status,
-        paymentDate: paymentDate ? new Date(paymentDate) : null,
-        paymentType,
-        notes,
-        remainingName,
-        remainingType,
-        frequency,
-        monthKey,
-      },
-    });
-
-    return NextResponse.json(expense, { status: 201 });
-  } catch (error) {
-    console.error("POST /api/expenses error:", error);
-    return NextResponse.json({ error: "Failed to create expense" }, { status: 500 });
-  }
+    const data = expenseCreateData(await readJsonObject(request));
+    return privateJson(await prisma.expense.create({ data }), 201);
+  } catch (error) { return apiError(error, "Failed to create expense."); }
 }

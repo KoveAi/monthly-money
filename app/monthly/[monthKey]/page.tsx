@@ -1,5 +1,6 @@
 "use client";
 
+import { privateFetch } from "@/lib/private-fetch";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
@@ -84,7 +85,7 @@ export default function MonthlyPage() {
     if (!monthKey) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/expenses?monthKey=${monthKey}`);
+      const res = await privateFetch(`/api/expenses?monthKey=${monthKey}`);
       const data = await res.json();
       setExpenses(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -100,7 +101,7 @@ export default function MonthlyPage() {
   }, [fetchExpenses]);
 
   async function handleUpdate(id: string, data: Partial<Expense>) {
-    await fetch(`/api/expenses/${id}`, {
+    await privateFetch(`/api/expenses/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -110,7 +111,7 @@ export default function MonthlyPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this expense?")) return;
-    await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    await privateFetch(`/api/expenses/${id}`, { method: "DELETE" });
     await fetchExpenses();
   }
 
@@ -121,7 +122,7 @@ export default function MonthlyPage() {
     setGenerating(true);
     setGenerateMsg(null);
     try {
-      const res = await fetch("/api/expenses/generate-month", {
+      const res = await privateFetch("/api/expenses/generate-month", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetMonthKey: nextMonth }),
@@ -149,7 +150,7 @@ export default function MonthlyPage() {
       return;
     }
 
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...addForm, amount: parseFloat(addForm.amount), monthKey }),

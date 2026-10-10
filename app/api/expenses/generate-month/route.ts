@@ -1,20 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { apiError, privateJson, readJsonObject, requireHousehold } from "@/lib/api-security";
+import { isMonthKey } from "@/lib/expense-validation";
 import { prisma } from "@/lib/prisma";
 import { rollingRemaining } from "@/lib/finance";
 
-export async function POST(request: NextRequest) {
-  try {
-    const { targetMonthKey } = await request.json();
+export const dynamic = "force-dynamic";
 
-    if (!targetMonthKey || !/^\d{4}-\d{2}$/.test(targetMonthKey)) {
-      return NextResponse.json({ error: "targetMonthKey must be YYYY-MM" }, { status: 400 });
+export async function POST(request: NextRequest) {
+  const denied = await requireHousehold(request);
+  if (denied) return denied;
+  try {
+    const { targetMonthKey } = await readJsonObject(request);
+
+    if (!isMonthKey(targetMonthKey)) {
+      return privateJson({ error: "targetMonthKey must be YYYY-MM" }, 400);
     }
 
     const existing = await prisma.expense.count({ where: { monthKey: targetMonthKey } });
     if (existing > 0) {
-      return NextResponse.json(
+      return privateJson(
         { error: `${targetMonthKey} already has ${existing} expense(s).` },
-        { status: 409 }
+        409
       );
     }
 
@@ -108,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     if (monthlyTemplate.length === 0 && annualDue.length === 0 &&
         lienCarry.length === 0 && incomeTemplate.length === 0) {
-      return NextResponse.json({ error: "No recurring expenses found to copy." }, { status: 404 });
+      return privateJson({ error: "No recurring expenses found to copy." }, 404);
     }
 
     // ── 3. Create monthly copies (preserve original due day) ───────────────
@@ -211,7 +217,7 @@ export async function POST(request: NextRequest) {
       ? ` + ${incomeRows.length} income source${incomeRows.length === 1 ? "" : "s"} (names only, amounts blank)`
       : "";
 
-    return NextResponse.json({
+    return privateJson({
       success: true,
       monthKey: targetMonthKey,
       monthly: monthlyTemplate.length,
@@ -225,7 +231,6 @@ export async function POST(request: NextRequest) {
              + (broughtOver > 0 ? ` · $${broughtOver.toFixed(2)} of unpaid balances carried forward` : ""),
     });
   } catch (error) {
-    console.error("generate-month error:", error);
-    return NextResponse.json({ error: "Failed to generate month" }, { status: 500 });
+    return apiError(error, "Failed to generate month.");
   }
 }

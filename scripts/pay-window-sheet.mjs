@@ -79,7 +79,30 @@ const mod = await import(pathToFileURL(join(BUILD, "paySheet.js")).href);
 const { buildPaySheet } = mod.default ?? mod;
 
 // ── Build ────────────────────────────────────────────────────────────────────
-const entries = await (await fetch(API)).json();
+// This CLI signs in like the browser; it does not bypass private API access.
+const accessCode = process.env.MONTHLY_MONEY_ACCESS_CODE;
+if (!accessCode) {
+  console.error("Set MONTHLY_MONEY_ACCESS_CODE in your private terminal to use the sheet script.");
+  process.exit(1);
+}
+const target = new URL(API);
+if (target.protocol !== "https:" && !(target.protocol === "http:" && ["localhost", "127.0.0.1"].includes(target.hostname))) {
+  throw new Error("The sheet API must use HTTPS (except local development).");
+}
+const login = await fetch(new URL("/api/auth/login", target.origin), {
+  method: "POST", redirect: "error",
+  headers: { "Content-Type": "application/json", "Origin": target.origin },
+  body: JSON.stringify({ accessCode }),
+});
+if (!login.ok) {
+  console.error("Unable to sign in. Check the app's private access setup and your access code.");
+  process.exit(1);
+}
+const cookie = login.headers.get("set-cookie")?.split(";")[0];
+if (!cookie) throw new Error("Sign-in did not return a session cookie.");
+const response = await fetch(API, { headers: { Cookie: cookie }, redirect: "error", cache: "no-store" });
+if (!response.ok) throw new Error("Unable to read the authenticated ledger.");
+const entries = await response.json();
 if (!Array.isArray(entries)) {
   console.error("Unexpected response from", API);
   process.exit(1);

@@ -3,6 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { BackToTop } from "@/components/BackToTop";
+import { cookies } from "next/headers";
+import { COOKIE_NAME, hasValidSession } from "@/lib/auth";
+import { SignOutButton } from "@/components/SignOutButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,7 +14,8 @@ export const metadata: Metadata = {
   description: "Personal expense tracker",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const signedIn = await hasValidSession((await cookies()).get(COOKIE_NAME)?.value);
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen`} style={{ background: "#ffffff", color: "#0f172a" }}>
@@ -30,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/dashboard" className="font-medium transition-colors" style={{ color: "rgba(255,255,255,0.65)", letterSpacing: "0.08em", fontSize: 11 }}>
                 DASHBOARD
               </Link>
+              {signedIn && <SignOutButton />}
             </nav>
           </div>
         </header>

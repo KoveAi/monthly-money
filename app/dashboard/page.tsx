@@ -1,5 +1,6 @@
 "use client";
 
+import { privateFetch } from "@/lib/private-fetch";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
@@ -139,7 +140,7 @@ export default function DashboardPage() {
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch("/api/expenses");
+      const res  = await privateFetch("/api/expenses");
       const data = await res.json();
       setAllExpenses(Array.isArray(data) ? data : []);
     } finally { setLoading(false); }
@@ -160,7 +161,7 @@ export default function DashboardPage() {
   }, [monthKey]);
 
   async function handleUpdate(id: string, data: Partial<Expense>) {
-    await fetch(`/api/expenses/${id}`, {
+    await privateFetch(`/api/expenses/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
     });
     await fetchExpenses();
@@ -168,7 +169,7 @@ export default function DashboardPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this entry?")) return;
-    await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    await privateFetch(`/api/expenses/${id}`, { method: "DELETE" });
     await fetchExpenses();
   }
 
@@ -183,7 +184,7 @@ export default function DashboardPage() {
     if (!confirm(`Generate ${fmtMonth(next)} from recurring expenses?`)) return;
     setGenerating(true); setGenMsg(null);
     try {
-      const res  = await fetch("/api/expenses/generate-month", {
+      const res  = await privateFetch("/api/expenses/generate-month", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetMonthKey: next }),
       });
@@ -199,7 +200,7 @@ export default function DashboardPage() {
     if (!addForm.description || !addForm.amount || !addForm.category || !addForm.dueDate) {
       setAddError("All fields required."); return;
     }
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...addForm, amount: parseFloat(addForm.amount), monthKey }),
     });
@@ -217,7 +218,7 @@ export default function DashboardPage() {
     if (!addGRForm.description || !addGRForm.amount || !addGRForm.dueDate) {
       setAddGRError("All fields required."); return;
     }
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...addGRForm, amount: parseFloat(addGRForm.amount), monthKey }),
     });
@@ -233,7 +234,7 @@ export default function DashboardPage() {
     if (!addMarketingForm.description || !addMarketingForm.amount || !addMarketingForm.dueDate) {
       setAddMarketingError("All fields required."); return;
     }
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...addMarketingForm, category: "Marketing", amount: parseFloat(addMarketingForm.amount), monthKey }),
     });
@@ -249,7 +250,7 @@ export default function DashboardPage() {
     if (!addAnnualForm.description || !addAnnualForm.amount || !addAnnualForm.category || !addAnnualForm.dueDate) {
       setAddAnnualError("All fields required."); return;
     }
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...addAnnualForm, amount: parseFloat(addAnnualForm.amount), monthKey }),
     });
@@ -265,7 +266,7 @@ export default function DashboardPage() {
     if (!addLienForm.description || !addLienForm.amount || !addLienForm.category || !addLienForm.dueDate) {
       setAddLienError("All fields required."); return;
     }
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...addLienForm, amount: parseFloat(addLienForm.amount), monthKey }),
     });
@@ -293,7 +294,7 @@ export default function DashboardPage() {
     if (!addIncomeForm.description || !addIncomeForm.amount || !addIncomeForm.dueDate) {
       setAddIncomeError("All fields required."); return;
     }
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...addIncomeForm,
@@ -1606,7 +1607,7 @@ function SpendingTable({ entries, accent, descriptionLabel = "Description", mont
     const amt = parseFloat(addAmt);
     if (isNaN(amt) || amt <= 0) { setAddErr("Enter a valid amount."); return; }
     setAdding(true);
-    const res = await fetch("/api/expenses", {
+    const res = await privateFetch("/api/expenses", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ description: addDesc.trim(), amount: amt, amountPaid: amt, category: frequency === "groceries" ? "Groceries" : frequency === "restaurants" ? "Dining" : frequency === "fuel" ? "Fuel" : "Incidental", dueDate: addDate, notes: addNotes || null, frequency, monthKey }),
     });

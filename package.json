@@ -6,16 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "tsc --noEmit",
     "db:push": "prisma db push",
-    "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "db:seed": "node -e \"console.log('Seeding is disabled; existing financial records are unchanged.')\"",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "sheet": "node scripts/pay-window-sheet.mjs"
+    "sheet": "node scripts/pay-window-sheet.mjs",
+    "auth:setup": "node scripts/setup-private-access.mjs",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "test:http": "node tests/production-smoke.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
-    "next": "14.2.3",
+    "iron-session": "9.0.1",
+    "next": "15.5.27",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -24,10 +29,19 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
+    "postcss": "8.5.29",
     "prisma": "^5.14.0",
     "tailwindcss": "^3.4.4",
     "ts-node": "^10.9.2",
+    "tsx": "4.23.15",
     "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "overrides": {
+    "postcss": "$postcss",
+    "nanoid": "^3.3.18",
+    "source-map-js": "^1.2.2"
   }
 }
