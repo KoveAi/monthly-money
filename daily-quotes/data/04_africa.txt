@@ -1,0 +1,69 @@
+# Origin|Language|Theme|Quote (English translation)
+Nigeria|Yoruba|Gratitude|A river that forgets its source will dry up.
+Nigeria|Yoruba|Character|Character is beauty.
+Nigeria|Yoruba|Responsibility|An elder does not stand by in the marketplace while a baby's head hangs crooked.
+Nigeria|Yoruba|Wealth|There is more than one road to the market.
+Nigeria|Yoruba|Resilience|The pot that will cook the pepper soup must endure the fire beneath it.
+Nigeria|Yoruba|Learning|When a child falls, it looks ahead; when an elder falls, he looks back.
+Nigeria|Igbo|Self-Belief|When a person says yes, their spirit says yes too.
+Nigeria|Igbo|Self-Belief|The lizard that leapt from the high iroko tree said it would praise itself if no one else did.
+Nigeria|Igbo|Community|Let the kite perch and let the eagle perch; whichever denies the other a place, may its wing break.
+Nigeria|Igbo|Wisdom|Proverbs are the palm oil with which words are eaten.
+Nigeria|Igbo|Discipline|A child who washes their hands may eat with the elders.
+Nigeria|Hausa|Resilience|However long the night, the dawn will come.
+Nigeria|Hausa|Patience|Slowly, slowly does not prevent arrival.
+Nigeria|Hausa|Character|However far the stone is thrown, it falls back to the ground.
+West Africa|Traditional|Truth|Until the lion learns to write, every tale of the hunt will glorify the hunter.
+Ghana|Akan|Learning|It is not wrong to go back for what you have forgotten.
+Ghana|Akan|Preparation|No one tests the depth of a river with both feet.
+Ghana|Akan|Leadership|When a king has good counselors, his reign is peaceful.
+Ghana|Akan|Family|The ruin of a nation begins in the homes of its people.
+Ghana|Akan|Community|Two crocodiles share one stomach, yet they fight over the food.
+Ghana|Akan|Legacy|When you follow in the path of your father, you learn to walk like him.
+Ghana|Akan|Truth|One falsehood spoils a thousand truths.
+Ghana|Akan|Character|Rain beats the leopard's skin, but it does not wash out the spots.
+Ghana|Akan|Gratitude|Do not call the forest that shelters you a jungle.
+Ghana|Akan|Learning|No one shows a child the sky.
+Ghana|Akan|Action|Wood already touched by fire is not hard to set alight.
+Ghana|Ewe|Wisdom|Wisdom is like a baobab tree: no single person can embrace it.
+Central Africa|Kikongo|Community|A single bracelet does not jingle.
+East Africa|Swahili|Learning|The one who is not taught by their mother will be taught by the world.
+East Africa|Swahili|Perseverance|Chip by chip, the log is finished.
+East Africa|Swahili|Preparation|If you do not fill the crack, you will have to build a wall.
+East Africa|Swahili|Patience|The hasty one never gets to taste the sweet.
+East Africa|Swahili|Community|One finger cannot crush a louse.
+East Africa|Swahili|Wisdom|Wisdom is like hair: everyone has their own.
+East Africa|Swahili|Action|Whoever wants what is under the bed must bend down.
+East Africa|Swahili|Discipline|The one who fears the child's crying will end up crying himself.
+East Africa|Swahili|Time|A good day reveals itself in the morning.
+East Africa|Swahili|Self-Mastery|Spilled water cannot be gathered up again.
+East Africa|Swahili|Action|When you see something floating, know that someone built it.
+East Africa|Swahili|Discipline|When the palm-wine tapper is praised, he begins to water down the wine.
+East Africa|Swahili|Patience|Hurry, hurry has no blessing.
+East Africa|Swahili|Learning|The one who will not heed the elder breaks a leg.
+East Africa|Swahili|Wisdom|To live long is to see much.
+East Africa|Swahili|Patience|The patient one eats the ripest fruit.
+South Africa|Zulu|Community|A person is a person through other people.
+South Africa|Zulu|Community|One hand washes the other.
+South Africa|Zulu|Learning|The way ahead is asked of those who have walked it before.
+South Africa|Zulu|Legacy|The bull is among the calves.
+Lesotho|Sesotho|Community|Two dogs together are not defeated by the wild beast.
+Botswana|Setswana|Community|A bag of locusts is carried by holding it together.
+Zimbabwe|Shona|Truth|That which has horns cannot be wrapped up.
+Zimbabwe|Shona|Kindness|The axe forgets, but the tree remembers.
+Ethiopia|Amharic|Community|When spider webs unite, they can tie up a lion.
+Ethiopia|Amharic|Patience|Little by little, an egg will walk on its own legs.
+Ethiopia|Amharic|Joy|Coffee and love taste best when hot.
+Ethiopia|Amharic|Wisdom|The fool speaks; the wise one listens.
+Ethiopia|Amharic|Learning|The one who learns, teaches.
+Ethiopia|Amharic|Truth|When the heart overflows, it comes out through the mouth.
+Somalia|Somali|Learning|Without knowledge, there is no light.
+Somalia|Somali|Community|If people come together, they can mend a crack in the sky.
+Senegal|Wolof|Patience|Slowly, slowly, one catches the monkey in the forest.
+Senegal|Wolof|Community|The remedy for a person is another person.
+Madagascar|Malagasy|Wisdom|Be like the chameleon: keep one eye on the future and one eye on the past.
+Madagascar|Malagasy|Community|Better to lose a little money than to lose a little friendship.
+Cameroon|Traditional|Courage|The one who asks questions cannot avoid the answers.
+Egypt|Egyptian Arabic|Family|In its mother's eyes, the monkey is a gazelle.
+Egypt|Egyptian Arabic|Self-Mastery|If your beloved is honey, do not eat it all.
+Africa|Traditional|Self-Mastery|When there is no enemy within, the enemies outside cannot hurt you.

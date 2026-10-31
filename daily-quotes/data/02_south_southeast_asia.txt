@@ -1,0 +1,62 @@
+# Origin|Language|Theme|Quote (English translation)
+India / Pakistan|Hindi-Urdu|Wealth|Drop by drop, the pot is filled.
+India / Pakistan|Hindi-Urdu|Perspective|Distant drums always sound sweet.
+India / Pakistan|Hindi-Urdu|Character|As your deeds are, so is your harvest.
+India / Pakistan|Hindi-Urdu|Community|One and one, standing together, make eleven.
+India / Pakistan|Hindi-Urdu|Health|While there is life, there is the whole world.
+India / Pakistan|Hindi-Urdu|Self-Mastery|The one who cannot dance says the courtyard is crooked.
+India / Pakistan|Hindi-Urdu|Action|What use is regret once the birds have eaten the field?
+India / Pakistan|Hindi-Urdu|Focus|A hundred taps of the goldsmith equal one blow of the blacksmith.
+India / Pakistan|Hindi-Urdu|Truth|The elephant has one set of teeth for showing and another for eating.
+India / Pakistan|Hindi-Urdu|Wisdom|One silence can defeat a hundred arguments.
+India / Pakistan|Hindi-Urdu|Discipline|An idle mind is the devil's home.
+India / Pakistan|Hindi-Urdu|Courage|One burned by hot milk blows even on cold buttermilk.
+India / Pakistan|Hindi-Urdu|Wealth|Stretch your legs only as far as your blanket reaches.
+India / Pakistan|Hindi-Urdu|Truth|Truth fears no flame.
+India / Pakistan|Hindi-Urdu|Community|A single chickpea cannot burst the oven.
+India|Sanskrit|Community|The whole world is one family.
+India|Sanskrit|Truth|Truth alone triumphs.
+India|Sanskrit|Action|Tasks are accomplished by effort, not by wishing; the deer does not walk into the mouth of the sleeping lion.
+India|Sanskrit|Learning|Knowledge gives humility; humility gives worthiness; worthiness brings wealth; and wealth, rightly used, brings happiness.
+India|Sanskrit|Self-Mastery|Avoid excess in all things.
+India|Sanskrit|Kindness|Treat the guest as you would treat the divine.
+India|Sanskrit|Purpose|Arise, awake; seek out the wise and learn.
+India|Sanskrit|Perspective|As your vision is, so is your world.
+India|Tamil|Perseverance|Small drops make a great flood.
+India|Tamil|Wealth|Even if you are throwing it into the river, measure it first.
+India|Tamil|Preparation|Do not step into water without knowing its depth.
+India|Tamil|Perspective|As your thoughts are, so your life becomes.
+India|Tamil|Generosity|Give from what remains once your own needs are met.
+India|Bengali|Resilience|The one who endures is the one who remains.
+India|Bengali|Community|When ten join hands in a task, there is no shame in winning or losing.
+India|Kannada|Action|If the hands get muddy, the mouth gets curd.
+Nepal|Nepali|Action|You cannot see heaven unless you die yourself.
+Thailand|Thai|Wisdom|Ten mouths speaking are not equal to one eye seeing.
+Thailand|Thai|Change|When you enter a city where everyone squints, you must squint too.
+Thailand|Thai|Patience|Slowly, slowly, you get a beautiful blade.
+Thailand|Thai|Truth|You cannot hide a dead elephant under a lotus leaf.
+Thailand|Thai|Action|When the tide is high, hurry to draw water.
+Cambodia|Khmer|Change|When the water rises, the fish eat the ants; when the water falls, the ants eat the fish.
+Malaysia|Malay|Perseverance|Little by little, in time, it becomes a hill.
+Malaysia|Malay|Community|United we stand firm; divided we collapse.
+Malaysia|Malay|Discipline|Row the raft upstream, then swim to the shore; endure the hardship first, and enjoy the comfort after.
+Malaysia|Malay|Wisdom|Do not assume that calm water has no crocodiles.
+Malaysia|Malay|Self-Mastery|If you truly want something, you will find a thousand ways; if not, you will find a thousand excuses.
+Malaysia|Malay|Patience|Better slow, as long as you arrive safely.
+Malaysia|Malay|Community|Light loads we carry together; heavy loads we shoulder together.
+Malaysia|Malay|Patience|The mountain will not run away from the one who chases it.
+Indonesia|Minangkabau|Learning|Nature, unfolding before us, becomes our teacher.
+Indonesia|Indonesian|Humility|The empty drum makes the loudest sound.
+Indonesia|Indonesian|Resilience|If there is no rattan, roots will do.
+Indonesia|Indonesian|Wealth|Thrift is the root of wealth.
+Indonesia|Indonesian|Discipline|Diligence is the root of skill.
+Indonesia|Indonesian|Courage|Be brave because you are right; be afraid only when you are wrong.
+Philippines|Tagalog|Gratitude|One who does not look back at where they came from will never reach where they are going.
+Philippines|Tagalog|Perseverance|Where there is perseverance, there is a meal on the table.
+Philippines|Tagalog|Action|Mercy comes from God, but the work comes from us.
+Philippines|Tagalog|Wealth|What you tuck away today, you can pull out tomorrow.
+Philippines|Tagalog|Wisdom|A desperate person will grab even the blade of a knife.
+Philippines|Tagalog|Wealth|While the blanket is short, learn to curl up.
+Philippines|Tagalog|Patience|The one who walks too fast is pricked deepest by the thorn.
+Philippines|Tagalog|Preparation|The prepared outdo the merely hardworking.
+Philippines|Tagalog|Wealth|Spend every blessing today, and tomorrow you will sit staring at nothing.

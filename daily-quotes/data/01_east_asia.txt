@@ -1,0 +1,88 @@
+# Origin|Language|Theme|Quote (English translation)
+China|Chinese|Perseverance|Do not fear going forward slowly; fear only standing still.
+China|Chinese|Perseverance|If you work at it long enough, even an iron rod can be ground into a needle.
+China|Chinese|Community|Three ordinary cobblers, with their wits combined, equal one master strategist.
+China|Chinese|Gratitude|When you drink the water, remember the source.
+China|Chinese|Resilience|Only by enduring the bitterest of hardships can one rise above others.
+China|Chinese|Time|An inch of time is an inch of gold, but an inch of gold cannot buy an inch of time.
+China|Chinese|Action|Distant water cannot put out a nearby fire.
+China|Chinese|Character|Real gold does not fear the furnace.
+China|Chinese|Learning|Learning is like rowing upstream: not to advance is to fall back.
+China|Chinese|Humility|When one tree stands taller than the forest, the wind will be the first to strike it.
+China|Chinese|Action|A single spark can set the whole prairie ablaze.
+China|Chinese|Community|When people are of one heart, they can move Mount Tai.
+China|Chinese|Joy|Smile once, and you grow ten years younger.
+China|Chinese|Truth|Good medicine is bitter to the mouth; honest advice is harsh to the ear.
+China|Chinese|Self-Mastery|A thousand-mile dike collapses because of a single ant hole.
+China|Chinese|Character|Plant melons and you harvest melons; plant beans and you harvest beans.
+China|Chinese|Learning|Every fall into a pit is a gain in your wit.
+China|Chinese|Resilience|Heaven never seals off every road.
+China|Chinese|Purpose|Where there is a will, the deed will be done.
+China|Chinese|Community|When everyone gathers firewood, the flames rise high.
+China|Chinese|Wisdom|Hearing a hundred times is not as good as seeing once.
+China|Chinese|Wealth|Better to be the head of a chicken than the tail of an ox.
+China|Chinese|Self-Mastery|A good horse does not turn back to graze on old grass.
+China|Chinese|Character|When the roots are deep, there is no reason to fear the wind.
+China|Chinese|Character|An upright body does not fear a crooked shadow.
+China|Chinese|Change|When the old man at the frontier lost his horse, who could say it was not a blessing?
+China|Chinese|Preparation|Sharpening the axe does not delay the cutting of firewood.
+China|Chinese|Legacy|It takes ten years to grow a tree and a hundred years to grow a people.
+China|Chinese|Perseverance|Water dripping day after day wears through stone.
+China|Chinese|Courage|Once you are riding the tiger, it is hard to get off.
+China|Chinese|Leadership|When the tree falls, the monkeys scatter.
+China|Chinese|Discipline|A worn-out brush is better than a good memory.
+China|Chinese|Humility|However strong you are, there is always someone stronger.
+China|Chinese|Time|There is no feast under heaven that does not eventually end.
+China|Chinese|Courage|If you do not enter the tiger's den, how will you catch the cub?
+China|Chinese|Generosity|A trace of fragrance always lingers on the hand that gives roses.
+China|Chinese|Responsibility|The one who tied the bell must be the one to untie it.
+China|Chinese|Preparation|Even the cleverest cook cannot make a meal without rice.
+China|Chinese|Kindness|A kind word warms three winters; a cruel word chills even in June.
+China|Chinese|Wisdom|The onlooker sees clearly; the player is confused.
+China|Chinese|Learning|Live until you are old, and learn until you are old.
+China|Chinese|Character|A long road reveals a horse's strength; long years reveal a person's heart.
+Japan|Japanese|Resilience|Fall seven times, stand up eight.
+Japan|Japanese|Humility|Even monkeys fall from trees.
+Japan|Japanese|Patience|Sit on a cold stone for three years and it will become warm.
+Japan|Japanese|Perspective|The frog in the well knows nothing of the great ocean, but it knows the depth of the sky.
+Japan|Japanese|Discipline|After the victory, tighten the cords of your helmet.
+Japan|Japanese|Perseverance|Even specks of dust, piled up, become a mountain.
+Japan|Japanese|Focus|The one who chases two hares catches neither.
+Japan|Japanese|Learning|To ask is a moment's shame; not to ask is a lifetime's shame.
+Japan|Japanese|Wisdom|Even the reverse side has a reverse side.
+Japan|Japanese|Joy|Good fortune comes to the house where there is laughter.
+Japan|Japanese|Resilience|After the rain, the ground grows firm.
+Japan|Japanese|Action|The day you decide to begin is your lucky day.
+Japan|Japanese|Patience|If you wait, there will be fair weather for sailing.
+Japan|Japanese|Change|Fortune and misfortune are twisted together like the strands of a rope.
+Japan|Japanese|Patience|If you are in a hurry, take the long way around.
+Japan|Japanese|Authenticity|The crow that imitates the cormorant drowns.
+Japan|Japanese|Time|Time flies like an arrow.
+Japan|Japanese|Learning|Better than a thousand days of diligent study is one day with a great teacher.
+Japan|Japanese|Humility|The skilled hawk hides its talons.
+Japan|Japanese|Self-Mastery|The mouth is the gateway to misfortune.
+Japan|Japanese|Wisdom|The pheasant would not be shot if it did not cry out.
+Korea|Korean|Action|Beginning is half the task.
+Korea|Korean|Resilience|Even if the sky collapses, there is a hole through which to rise.
+Korea|Korean|Change|The higher the mountain, the deeper the valley.
+Korea|Korean|Preparation|Tap even a stone bridge before you cross it.
+Korea|Korean|Humility|The riper the rice, the lower it bows its head.
+Korea|Korean|Self-Mastery|Words without feet travel a thousand miles.
+Korea|Korean|Preparation|Do not be the one who mends the barn only after the cow is gone.
+Korea|Korean|Community|Even a sheet of paper is lighter when two people lift it.
+Korea|Korean|Humility|The frog forgets that it was once a tadpole.
+Korea|Korean|Legacy|A tiger leaves its skin when it dies; a person leaves a name.
+Korea|Korean|Wisdom|When whales fight, it is the shrimp's back that breaks.
+Korea|Korean|Kindness|If the words you send out are kind, the words that return will be kind.
+Korea|Korean|Patience|However busy you are, you cannot tie the thread to the middle of the needle.
+Korea|Korean|Perseverance|There is no tree that will not fall after ten strokes of the axe.
+Korea|Korean|Perseverance|Effort never betrays the one who gives it.
+Mongolia|Mongolian|Courage|If you are afraid, do not do it; if you are doing it, do not be afraid.
+Tibet|Tibetan|Courage|Better to live one day as a tiger than a thousand years as a sheep.
+Vietnam|Vietnamese|Gratitude|When eating the fruit, remember the one who planted the tree.
+Vietnam|Vietnamese|Community|One tree alone cannot make a mountain; three trees together make a high one.
+Vietnam|Vietnamese|Gratitude|Whoever teaches you one word is your teacher; whoever teaches you half a word is still your teacher.
+Vietnam|Vietnamese|Learning|Travel one day, and you gain a basketful of wisdom.
+Vietnam|Vietnamese|Character|Good wood is worth more than good paint.
+Vietnam|Vietnamese|Resilience|Fire tests gold; hardship tests strength.
+Vietnam|Vietnamese|Character|Though hungry, stay clean; though in rags, stay fragrant.

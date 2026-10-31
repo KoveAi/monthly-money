@@ -1,0 +1,93 @@
+# Origin|Language|Theme|Quote (English translation)
+China|Chinese|Character|Stand near vermilion and you turn red; stand near ink and you turn black.
+China|Chinese|Wealth|With enough money, you can make the devil turn the millstone.
+China|Chinese|Self-Mastery|Illness enters through the mouth; misfortune comes out of it.
+China|Chinese|Community|Without a fight, there is no true acquaintance.
+China|Chinese|Legacy|Those who came before plant the trees; those who come after enjoy the shade.
+China|Chinese|Self-Belief|Old ginger is the spiciest.
+China|Chinese|Discipline|Miss by a hair, and you will be off by a thousand miles.
+China|Chinese|Action|All talk and no practice is a fake skill.
+China|Chinese|Discipline|The clumsy bird sets out early.
+China|Chinese|Wisdom|Water that is too clear holds no fish.
+China|Chinese|Leadership|One mountain cannot hold two tigers.
+Japan|Japanese|Humility|The greatest strength is often the one holding everything up from beneath the floor, unseen.
+Japan|Japanese|Kindness|Pinch yourself to know another's pain.
+Japan|Japanese|Health|Eat until you are eight parts full, and you will need no doctor.
+Japan|Japanese|Learning|Practice beats instruction.
+Japan|Japanese|Purpose|Do everything that is humanly possible, then await heaven's will.
+Korea|Korean|Courage|Even if you are dragged into the tiger's den, you will survive if you keep your wits.
+Korea|Korean|Learning|After three years at the village school, even the dog can recite poetry.
+Korea|Korean|Kindness|One kind word can repay a debt of a thousand coins.
+Korea|Korean|Self-Belief|The smaller pepper is the hotter one.
+Korea|Korean|Action|Pull out the ox horn in one go, while it is still warm.
+India|Sanskrit|Wealth|Moment by moment, gather knowledge; grain by grain, gather wealth.
+India|Sanskrit|Generosity|Trees bear fruit for others, rivers flow for others; so too this life is meant for the service of others.
+India|Sanskrit|Community|In this age, strength lies in unity.
+India|Sanskrit|Discipline|Hard work alone triumphs.
+India|Sanskrit|Truth|Truth is one; the wise call it by many names.
+India / Pakistan|Hindi-Urdu|Kindness|Do good, and good will come to you.
+India / Pakistan|Hindi-Urdu|Wealth|A tall shop does not guarantee sweet treats.
+Arab World|Arabic|Action|When your winds blow, make the most of them.
+Arab World|Arabic|Generosity|Generosity is measured by what one has.
+Arab World|Arabic|Legacy|They planted, and we ate; now we plant, so that others may eat.
+Arab World|Arabic|Wisdom|The one who does not know the falcon will roast it.
+Iran|Persian|Wealth|What the wind brings, the wind takes away.
+Iran|Persian|Focus|Picking up a very large stone is a sign you do not intend to throw it.
+Turkey|Turkish|Preparation|The water sleeps, but the enemy does not.
+Turkey|Turkish|Learning|One hardship teaches more than a thousand pieces of advice.
+Turkey|Turkish|Community|A neighbor needs even the ashes of a neighbor.
+Turkey|Turkish|Patience|Gaining knowledge is like digging a well with a needle.
+Nigeria|Yoruba|Purpose|If you do not know where you are going, at least know where you came from.
+Ghana|Akan|Leadership|One head does not hold a council.
+Nigeria|Igbo|Character|A good name is worth more than money.
+Nigeria|Hausa|Patience|The patient person can cook a stone until they drink its broth.
+South Africa|Zulu|Kindness|The traveler's stomach is small, like the wing of a locust.
+South Africa|Xhosa|Learning|The one who refuses advice learns by bleeding.
+Lesotho|Sesotho|Generosity|To give is to store up for yourself.
+Botswana|Setswana|Family|The mother of the child grabs the knife by its sharp edge.
+East Africa|Swahili|Kindness|A sick person is not asked whether they want porridge.
+East Africa|Swahili|Community|Where many gather, God is present.
+East Africa|Swahili|Action|The one who eats today is the one who is fed; yesterday's feast feeds no one.
+East Africa|Swahili|Self-Mastery|The one who has eyes need not be told to look.
+Spain|Spanish|Leadership|The master's eye fattens the horse.
+Spain|Spanish|Kindness|Whoever loves you well will sometimes make you cry.
+Spain|Spanish|Action|Deeds are love, not fine words.
+Spain|Spanish|Humility|Whoever has a mouth makes mistakes.
+Spain|Catalan|Discipline|Whoever has no work combs the cat.
+Italy|Italian|Perseverance|Whoever has done thirty can do thirty-one.
+Italy|Italian|Self-Belief|An old hen makes the best broth.
+France|French|Courage|You cannot make an omelet without breaking eggs.
+France|French|Change|It is never too late to do good.
+Germany|German|Wealth|A trade stands on a golden floor.
+Germany|German|Preparation|Caution is the mother of the china cabinet.
+Germany|German|Patience|No master has ever fallen from the sky.
+Finland|Finnish|Perseverance|Diligence overcomes even hard luck.
+Lithuania|Lithuanian|Character|Good work praises itself.
+Czech Republic|Czech|Patience|Patience brings roses.
+Hungary|Hungarian|Community|Many geese can defeat a pig.
+Ireland|Irish|Humility|There is no wise person without a fault.
+Scotland|Scots|Learning|You cannot put an old head on young shoulders.
+England|English|Wealth|Waste not, want not.
+England|English|Perspective|It is an ill wind that blows nobody any good.
+England|English|Resilience|Every dog has its day.
+England|English|Wisdom|You cannot have your cake and eat it too.
+England|English|Time|Time and tide wait for no one.
+Ancient Rome|Latin|Discipline|No day without a line.
+Ancient Rome|Latin|Humility|To err is human.
+Ancient Rome|Latin|Learning|The one who writes reads twice.
+Ancient Rome|Latin|Learning|Experience teaches.
+Mexico|Spanish|Wealth|People only come close to the cactus when it bears fruit.
+Mexico|Spanish|Perspective|Do not drown in a glass of water.
+Latin America|Spanish|Humility|Tell me what you boast about, and I will tell you what you lack.
+Haiti|Haitian Creole|Responsibility|God's pencil has no eraser.
+Haiti|Haitian Creole|Truth|A leaky roof can fool the sun, but it cannot fool the rain.
+Jamaica|Jamaican Patois|Preparation|When the chicken is merry, the hawk is near.
+Jamaica|Jamaican Patois|Gratitude|The cow never knows the use of its tail until it loses it.
+United States (African American)|English|Truth|What is done in the dark will come to the light.
+New Zealand|Māori|Perseverance|It is a great river indeed that cannot be crossed.
+New Zealand|Māori|Community|Let us keep close together, not far apart.
+New Zealand|Māori|Leadership|Lift the paddles in unison, or the canoe will never reach the shore.
+New Zealand|Māori|Change|The old net is cast aside, and the new net goes fishing.
+Hawaii|Hawaiian|Preparation|No breadfruit can be reached when the picking stick is too short.
+Hawaii|Hawaiian|Community|The canoe is an island, and the island is a canoe.
+Hawaii|Hawaiian|Learning|Take wisdom and make it deep.

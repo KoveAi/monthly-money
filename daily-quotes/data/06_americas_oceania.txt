@@ -1,0 +1,62 @@
+# Origin|Language|Theme|Quote (English translation)
+Mexico|Spanish|Perseverance|Whoever keeps at it, gets it.
+Mexico|Spanish|Learning|The devil knows more from being old than from being the devil.
+Mexico|Spanish|Resilience|No misfortune lasts a hundred years.
+Mexico|Spanish|Discipline|The lazy one ends up working twice.
+Mexico|Spanish|Courage|The baby who does not cry does not get fed.
+Mexico|Spanish|Self-Mastery|To foolish words, deaf ears.
+Mexico|Spanish|Community|Today for you, tomorrow for me.
+Mexico|Spanish|Focus|The one who tries to grasp too much holds on to little.
+Mexico|Spanish|Patience|Better a pace that lasts than a trot that tires.
+Colombia|Spanish|Patience|There is more time than life.
+Colombia|Spanish|Self-Belief|A good rooster crows in any yard.
+Latin America|Spanish|Truth|No one is so blind as the one who refuses to see.
+Peru|Quechua|Character|Do not steal, do not lie, do not be lazy.
+Brazil|Portuguese|Preparation|Go gently with the procession; the saint is made of clay.
+Brazil|Portuguese|Purpose|God writes straight with crooked lines.
+Haiti|Haitian Creole|Perseverance|Beyond the mountains, there are more mountains.
+Haiti|Haitian Creole|Community|With many hands, the load is not heavy.
+Haiti|Haitian Creole|Health|An empty sack cannot stand up.
+Haiti|Haitian Creole|Truth|The donkey does the work; the horse gets the medals.
+Haiti|Haitian Creole|Wisdom|The cockroach is never right in front of the chicken.
+Haiti|Haitian Creole|Humility|Speaking French does not make you wise.
+Jamaica|Jamaican Patois|Perseverance|One coconut at a time fills the basket.
+Jamaica|Jamaican Patois|Wisdom|Those who want it cannot get it, and those who get it do not want it.
+Jamaica|Jamaican Patois|Preparation|Every day the bucket goes to the well; one day the bottom will drop out.
+Jamaica|Jamaican Patois|Focus|I came here to drink milk, not to count cows.
+Jamaica|Jamaican Patois|Self-Mastery|What tastes sweet to the goat will upset its stomach.
+Jamaica|Jamaican Patois|Resilience|Use a smile to cover a heartache.
+Trinidad and Tobago|Trinidadian Creole|Wisdom|Not every flash of teeth is a smile.
+Haudenosaunee (Iroquois)|Traditional principle|Legacy|In every decision, consider the impact on the seventh generation to come.
+Lakota|Lakota|Community|We are all related.
+Hawaii|Hawaiian|Community|No task is too big when it is done together.
+Hawaii|Hawaiian|Self-Mastery|In the word there is life; in the word there is death.
+Hawaii|Hawaiian|Learning|Not all knowledge is learned in one school.
+Hawaii|Hawaiian|Learning|In the doing, one learns.
+Hawaii|Hawaiian|Wisdom|Observe with the eyes, listen with the ears, and keep the mouth shut.
+Hawaii|Hawaiian|Perseverance|Put the paddle forward and pull it back; keep paddling.
+Hawaii|Hawaiian|Humility|The land is the chief; the person is its servant.
+Hawaii|Hawaiian|Character|The expert is revealed in the work.
+Hawaii|Hawaiian|Kindness|Love gives life within.
+Hawaii|Hawaiian|Family|Recognize others and be recognized; help others and be helped; such is family life.
+New Zealand|Māori|Purpose|Seek the treasure you value most; if you must bow your head, let it be to a lofty mountain.
+New Zealand|Māori|Community|With your food basket and my food basket, the people will thrive.
+New Zealand|Māori|Legacy|Walk backward into the future, with your eyes on the past.
+New Zealand|Māori|Community|My strength is not that of one, but that of many.
+New Zealand|Māori|Action|Deep throat, shallow muscles.
+New Zealand|Māori|Character|Strip away the sapwood, so that only the heartwood remains.
+New Zealand|Māori|Courage|Feel the fear, and achieve success anyway.
+New Zealand|Māori|Leadership|The food of chiefs is dialogue.
+New Zealand|Māori|Learning|Seek knowledge for the sake of your wellbeing.
+New Zealand|Māori|Courage|Do not die like the octopus; die like the hammerhead shark.
+New Zealand|Māori|Action|The white heron flies only once.
+New Zealand|Māori|Legacy|The land remains when the people have disappeared.
+New Zealand|Māori|Courage|Be strong, be brave, be steadfast.
+Samoa|Samoan|Leadership|The path to leadership is through service.
+Papua New Guinea|Asaro|Learning|Knowledge is only rumor until it lives in the muscle.
+United States|English|Courage|The squeaky wheel gets the grease.
+United States|English|Community|Good fences make good neighbors.
+United States (African American)|English|Perseverance|Keep your eyes on the prize, and hold on.
+United States (African American)|English|Generosity|Each one, teach one.
+United States|English|Self-Mastery|Do not let your mouth write a check your body cannot cash.
+United States|English|Patience|You have to crawl before you can walk.

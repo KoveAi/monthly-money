@@ -1,0 +1,97 @@
+# Origin|Language|Theme|Quote (English translation)
+China|Chinese|Action|Rather than stand at the pool envying the fish, go home and weave a net.
+China|Chinese|Resilience|Failure is the mother of success.
+China|Chinese|Discipline|The plan for the day lies in the morning; the plan for the year lies in the spring.
+China|Chinese|Resilience|When the cart reaches the mountain, a road will appear.
+China|Chinese|Action|Opportunity must not be lost, for it does not come again.
+China|Chinese|Discipline|One measure of plowing, one measure of harvest.
+China|Chinese|Self-Belief|Nothing under heaven is difficult for the one who is determined.
+China|Chinese|Preparation|With preparation, things stand; without it, they fall.
+China|Chinese|Resilience|The sword's sharp edge comes from grinding; the plum blossom's fragrance comes from the bitter cold.
+China|Chinese|Patience|Three feet of ice is not formed by one day of cold.
+China|Chinese|Patience|You cannot grow fat on a single mouthful.
+China|Chinese|Purpose|People climb toward higher ground, as water flows toward lower ground.
+China|Chinese|Preparation|Do not fear the ten thousand likely things; fear the one unlikely thing.
+China|Chinese|Humility|No gold is perfectly pure, and no person is perfect.
+China|Chinese|Resilience|When soldiers come, the general blocks them; when water comes, the earth dams it.
+China|Chinese|Community|A fence needs three stakes; a hero needs three helpers.
+China|Chinese|Wealth|Good wine needs no fear of a deep alley.
+China|Chinese|Wealth|Harmony brings wealth.
+China|Chinese|Resilience|As long as the green mountains remain, there is no fear of running out of firewood.
+China|Chinese|Change|A tree that is moved dies; a person who moves thrives.
+China|Chinese|Perspective|Take one step back, and the sea and sky open wide.
+China|Chinese|Wealth|Only by letting go can you receive.
+China|Chinese|Family|When the family lives in harmony, all things prosper.
+China|Chinese|Patience|Even a tower ten thousand feet tall rises from level ground.
+Japan|Japanese|Perseverance|Continuing is power.
+Japan|Japanese|Courage|Giving birth is easier than worrying about it.
+Japan|Japanese|Purpose|What you love, you will become skilled at.
+Japan|Japanese|Kindness|Even a one-inch insect has a half-inch soul.
+Japan|Japanese|Perspective|It is darkest at the foot of the lighthouse.
+Japan|Japanese|Preparation|When you are prepared, there is nothing to worry about.
+Japan|Japanese|Change|Wherever you live, in time it becomes your capital.
+Japan|Japanese|Resilience|Tomorrow, tomorrow's wind will blow.
+Japan|Japanese|Kindness|Kindness is not only for others' sake; it comes back to you.
+Japan|Japanese|Resilience|Where there is hardship, there is ease.
+Japan|Japanese|Authenticity|Ten people, ten colors.
+Japan|Japanese|Self-Mastery|Watch how others behave, and correct your own behavior.
+Japan|Japanese|Wealth|Take a small loss to secure a greater gain.
+Japan|Japanese|Wealth|Business is like a cow's drool: long and steady.
+Korea|Korean|Focus|If you are going to dig a well, dig only one.
+Korea|Korean|Self-Mastery|Birds hear the words spoken by day; mice hear the words spoken by night.
+Korea|Korean|Action|Even three bushels of beads become a treasure only when they are strung.
+Korea|Korean|Humility|Ask the way, even on a road you know.
+Korea|Korean|Discipline|Habits formed at three last until eighty.
+Korea|Korean|Leadership|With too many boatmen, the boat ends up on the mountain.
+Korea|Korean|Gratitude|The other person's rice cake always looks bigger.
+Korea|Korean|Courage|The day-old puppy does not know enough to fear the tiger.
+Korea|Korean|Perseverance|Would a tower built with devotion ever crumble?
+Zen Tradition|Japanese-Chinese|Purpose|Before enlightenment, chop wood and carry water; after enlightenment, chop wood and carry water.
+Zen Tradition|Japanese-Chinese|Perspective|No snowflake ever falls in the wrong place.
+Zen Tradition|Japanese-Chinese|Patience|Sitting quietly, doing nothing, spring comes, and the grass grows by itself.
+Buddhist Tradition|Sanskrit-Chinese|Wisdom|The finger pointing at the moon is not the moon.
+India / Pakistan|Hindi-Urdu|Health|As the food, so the mind.
+India / Pakistan|Hindi-Urdu|Patience|What ripens slowly is the sweetest.
+India / Pakistan|Hindi-Urdu|Action|Clouds that thunder seldom bring rain.
+India / Pakistan|Hindi-Urdu|Change|Whenever you wake up, that is your morning.
+India / Pakistan|Hindi-Urdu|Patience|The fruit of patience is sweet.
+India / Pakistan|Hindi-Urdu|Self-Belief|Your own hand is your greatest ally.
+Malaysia|Malay|Perseverance|Hold the burning ember until it turns to charcoal.
+Malaysia|Malay|Family|Even the tongue is sometimes bitten by its own teeth.
+Thailand|Thai|Truth|In hot water the fish live; in cool water the fish die. Harsh truth saves; sweet flattery kills.
+Arab World|Arabic|Wisdom|Choose the neighbor before the house.
+Arab World|Arabic|Wisdom|Choose the companion before the road.
+Arab World|Arabic|Community|One hand cannot clap.
+Arab World|Arabic|Wisdom|The best speech is brief and to the point.
+Arab World|Arabic|Self-Mastery|Your tongue is your horse: guard it, and it will guard you.
+Arab World|Arabic|Wisdom|If speech is silver, then silence is gold.
+Arab World|Arabic|Responsibility|Nothing scratches your skin as well as your own fingernail.
+Arab World|Arabic|Character|Birds land among their own kind.
+Arab World|Arabic|Character|Every vessel pours out what it holds.
+Arab World|Arabic|Change|What has passed is gone.
+Arab World|Arabic|Wealth|Contentment is a treasure that never runs out.
+Arab World|Arabic|Community|Many a brother was not born to your mother.
+Arab World|Arabic|Character|Solitude is better than bad company.
+Arab World|Arabic|Action|Do not put off today's work until tomorrow.
+Arab World|Arabic|Patience|In deliberation there is safety; in haste there is regret.
+Iran|Persian|Wealth|The bigger the roof, the more snow it gathers.
+Iran|Persian|Action|From you the movement; from God the blessing.
+Iran|Persian|Courage|Once the water is over your head, one span or a hundred makes no difference.
+Iran|Persian|Discipline|Doing a thing well comes from doing it often.
+Iran|Persian|Self-Mastery|The answer to a fool is silence.
+Iran|Persian|Patience|With patience, the sour grape becomes sweet halva.
+Turkey|Turkish|Humility|There is always a mind above your mind.
+Turkey|Turkish|Family|It is the mother bird who builds the nest.
+Turkey|Turkish|Patience|The patient dervish attains his wish.
+Turkey|Turkish|Learning|Not knowing is no shame; not learning is.
+Turkey|Turkish|Change|So much can be born before the sun rises.
+Eastern Europe (Jewish)|Yiddish|Patience|If you live long enough, you will live to see it.
+Eastern Europe (Jewish)|Yiddish|Wisdom|The crowd is a golem.
+Eastern Europe (Jewish)|Yiddish|Truth|With a lie you may go far, but you can never go back.
+Eastern Europe (Jewish)|Yiddish|Wealth|Money is round; it rolls away.
+Eastern Europe (Jewish)|Yiddish|Resilience|God sends the remedy before the illness.
+Ancient Mesopotamia|Sumerian|Family|Friendship lasts a day; kinship lasts forever.
+Ancient Mesopotamia|Sumerian|Wealth|Whoever has much silver may be happy, whoever has much grain may be glad, but whoever has nothing can sleep.
+Ancient Mesopotamia|Sumerian|Truth|Tell a lie, and when you later tell the truth, it will be taken for a lie.
+Ancient Mesopotamia|Sumerian|Family|A loving heart builds the house; a hateful heart destroys it.
+Ancient Mesopotamia|Sumerian|Wealth|Build like a lord and you will live like a slave; build like a slave and you will live like a lord.

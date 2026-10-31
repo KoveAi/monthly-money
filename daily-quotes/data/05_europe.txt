@@ -1,0 +1,142 @@
+# Origin|Language|Theme|Quote (English translation)
+Russia|Russian|Preparation|Measure seven times; cut once.
+Russia|Russian|Action|Without labor, you cannot even pull a fish from the pond.
+Russia|Russian|Patience|The morning is wiser than the evening.
+Russia|Russian|Wisdom|Trust, but verify.
+Russia|Russian|Community|Do not have a hundred rubles; have a hundred friends.
+Russia|Russian|Courage|If you fear the wolves, stay out of the forest.
+Russia|Russian|Courage|The eyes are afraid, but the hands do the work.
+Russia|Russian|Patience|The quieter you ride, the farther you will go.
+Russia|Russian|Action|Water does not flow beneath a lying stone.
+Russia|Russian|Courage|The one who never takes a risk never drinks champagne.
+Russia|Russian|Wealth|The miser pays twice.
+Russia|Russian|Discipline|There is a time for work and an hour for play.
+Russia|Russian|Community|A friend is known in times of trouble.
+Russia|Russian|Truth|What is written with a pen cannot be cut out with an axe.
+Russia|Russian|Community|One person alone in the field is no army.
+Russia|Russian|Community|One old friend is better than two new ones.
+Ukraine|Ukrainian|Action|Trust in God, but do not be careless yourself.
+Ukraine|Ukrainian|Learning|Learning is light; ignorance is darkness.
+Poland|Polish|Focus|Not my circus, not my monkeys.
+Poland|Polish|Wealth|Without work, there are no cakes.
+Poland|Polish|Courage|Fear has big eyes.
+Czech Republic|Czech|Patience|Do not praise the day before the evening.
+Czech Republic|Czech|Wisdom|Better a sparrow in the hand than a pigeon on the roof.
+Czech Republic|Czech|Learning|As many languages as you know, that many times you are a person.
+Serbia|Serbian|Patience|The patient one is saved.
+Serbia|Serbian|Humility|Be humble, for you are made of earth; be noble, for you are made of stars.
+Croatia|Croatian|Character|A good reputation is heard far away, and a bad one even farther.
+Bulgaria|Bulgarian|Kindness|The gentle lamb feeds from two mothers.
+Hungary|Hungarian|Wisdom|The wise one yields; the donkey suffers.
+Hungary|Hungarian|Courage|The one who dares, wins.
+Finland|Finnish|Gratitude|Your own land is a strawberry; other lands are blueberries.
+Finland|Finnish|Wisdom|The one who has happiness should keep it quietly hidden.
+Finland|Finnish|Courage|No one should blame the one who tried.
+Finland|Finnish|Resilience|The sun will shine even on the pile of brushwood.
+Finland|Finnish|Wisdom|The fool does much work; the wise one gets by with less.
+Estonia|Estonian|Resilience|The one who endures lives long.
+Estonia|Estonian|Responsibility|Where you see a fault to criticize, come and help.
+Latvia|Latvian|Discipline|The work makes the worker.
+Sweden|Swedish|Community|Shared joy is double joy; shared sorrow is half a sorrow.
+Sweden|Swedish|Self-Mastery|Just enough is best.
+Sweden|Swedish|Patience|The one who waits for something good never waits too long.
+Sweden|Swedish|Family|Away is good, but home is best.
+Sweden / Norway|Swedish-Norwegian|Preparation|There is no bad weather, only bad clothing.
+Sweden|Swedish|Patience|Do not sell the skin before the bear is shot.
+Sweden|Swedish|Family|Even small pots have ears.
+Norway|Norwegian|Health|Out on a hike, never in a bad mood.
+Norway|Norwegian|Preparation|Better to be cautious beforehand than clever afterward.
+Denmark|Danish|Humility|Do not throw stones when you live in a house of glass.
+Denmark|Danish|Focus|Do not cross the stream to fetch water.
+Denmark|Danish|Responsibility|No one can do everything, but everyone can do something.
+Iceland|Icelandic|Resilience|It will all work out.
+Iceland|Icelandic|Self-Belief|Many are mighty, though they are small.
+Germany|German|Discipline|The morning hour has gold in its mouth.
+Germany|German|Perseverance|Every beginning is hard.
+Germany|German|Discipline|Practice makes the master.
+Germany|German|Truth|Lies have short legs.
+Germany|German|Action|Whoever rests, rusts.
+Germany|German|Discipline|Without diligence, there is no prize.
+Germany|German|Responsibility|Whoever says A must also say B.
+Germany|German|Wealth|Even small livestock make manure.
+Germany|German|Kindness|The tone makes the music.
+Germany|German|Resilience|Necessity makes one inventive.
+Germany|German|Gratitude|Hunger is the best cook.
+Germany|German|Perspective|Do not fail to see the forest for all the trees.
+Germany|German|Patience|A good thing takes its time.
+Netherlands|Dutch|Humility|Just act normal; that is already crazy enough.
+Netherlands|Dutch|Wealth|Whoever does not honor the small is not worthy of the great.
+Netherlands|Dutch|Learning|Better well borrowed than badly invented.
+Netherlands|Dutch|Leadership|Gentle healers make festering wounds.
+France|French|Patience|Little by little, the bird builds its nest.
+France|French|Self-Belief|To want is to be able.
+France|French|Character|The robe does not make the monk.
+France|French|Perspective|Everyone sees noon at their own door.
+France|French|Preparation|Better to prevent than to cure.
+France|French|Discipline|It is by forging that one becomes a blacksmith.
+France|French|Character|There are no foolish trades, only foolish people.
+France|French|Character|Whoever sows the wind will reap the storm.
+France|French|Patience|Everything comes in time to the one who knows how to wait.
+France|French|Action|The absent are always in the wrong.
+Italy|Italian|Action|The one who sleeps catches no fish.
+Italy|Italian|Action|Between saying and doing lies the sea.
+Italy|Italian|Community|Whoever finds a friend finds a treasure.
+Italy|Italian|Humility|After the game, the king and the pawn go back into the same box.
+Italy|Italian|Perseverance|The one who endures, wins.
+Italy|Italian|Responsibility|The one who does it himself does it for three.
+Italy|Italian|Resilience|Not every doughnut comes out with a hole.
+Italy|Italian|Leadership|The fish rots from the head.
+Italy|Italian|Gratitude|The one who is content, enjoys.
+Italy|Italian|Patience|Rome was not built in a day.
+Italy|Italian|Time|Whoever has time should not wait for more time.
+Italy|Italian|Learning|By making mistakes, one learns.
+Spain|Spanish|Character|Tell me who you walk with, and I will tell you who you are.
+Spain|Spanish|Discipline|God helps the one who rises early.
+Spain|Spanish|Action|The shrimp that falls asleep is carried off by the current.
+Spain|Spanish|Generosity|Do good without looking to see for whom.
+Spain|Spanish|Responsibility|In the blacksmith's house, the knives are made of wood.
+Spain|Spanish|Patience|Rising early does not make the dawn come sooner.
+Spain|Spanish|Resilience|To bad weather, a good face.
+Spain|Spanish|Wisdom|Skill is worth more than strength.
+Spain|Spanish|Wealth|Greed bursts the sack.
+Spain|Spanish|Change|Water you will not drink, let it flow.
+Portugal|Portuguese|Resilience|Whoever has no dog hunts with a cat.
+Portugal|Portuguese|Preparation|Caution died of old age.
+Portugal|Portuguese|Learning|Whoever has a mouth can find the way to Rome.
+Portugal|Portuguese|Resilience|A calm sea does not make a good sailor.
+Brazil|Portuguese|Focus|Each monkey on its own branch.
+Greece|Greek|Legacy|A society grows great when the old plant trees whose shade they know they will never sit in.
+Greece|Greek|Leadership|A good captain shows himself in the storm.
+Greece|Greek|Self-Mastery|The tongue has no bones, yet it breaks bones.
+Greece|Greek|Action|Whoever does not want to knead the dough spends ten days sifting the flour.
+Ancient Greece|Ancient Greek|Self-Mastery|Know thyself.
+Ireland|Irish|Community|There is no strength without unity.
+Ireland|Irish|Leadership|Praise the young, and they will flourish.
+Ireland|Irish|Community|People live in one another's shelter.
+Ireland|Irish|Self-Mastery|A person's mouth has often broken their nose.
+Ireland|Irish|Community|Two people shorten the road.
+Ireland|Irish|Joy|May the road rise up to meet you, and the wind be always at your back.
+Ireland|Irish|Action|You will never plough a field by turning it over in your mind.
+Scotland|Scots|Purpose|What is meant for you will not pass you by.
+Scotland|Scots|Joy|Be happy while you are living, for you are a long time dead.
+Wales|Welsh|Leadership|Whoever would be a leader, let them be a bridge.
+Wales|Welsh|Legacy|A nation without a language is a nation without a heart.
+England|English|Patience|Great oaks from little acorns grow.
+England|English|Action|Fine words butter no parsnips.
+England|English|Character|Still waters run deep.
+England|English|Action|Make hay while the sun shines.
+England|English|Community|A chain is only as strong as its weakest link.
+England|English|Wisdom|You can lead a horse to water, but you cannot make it drink.
+England|English|Wealth|Where there is muck, there is brass.
+England|English|Preparation|Hope for the best, and prepare for the worst.
+England|English|Action|If wishes were horses, beggars would ride.
+Ancient Rome|Latin|Learning|Repetition is the mother of learning.
+Ancient Rome|Latin|Wisdom|Had you kept silent, you would have remained a philosopher.
+Ancient Rome|Latin|Resilience|Through hardship to the stars.
+Ancient Rome|Latin|Patience|Make haste slowly.
+Ancient Rome|Latin|Learning|By teaching, we learn.
+Ancient Rome|Latin|Time|Remember that you will die.
+Ancient Rome|Latin|Resilience|While I breathe, I hope.
+Ancient Rome|Latin|Truth|Spoken words fly away; written words remain.
+Ancient Rome|Latin|Courage|The one who stays silent is taken to consent.
+Ancient Rome|Latin|Resilience|I will either find a way or make one.

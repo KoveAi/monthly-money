@@ -1,0 +1,46 @@
+# Origin|Language|Theme|Quote (English translation)
+Arab World|Arabic|Patience|Patience is the key to relief.
+Arab World|Arabic|Perseverance|Whoever strives, finds.
+Arab World|Arabic|Time|Time is a sword: if you do not cut it, it will cut you.
+Arab World|Arabic|Learning|Learning in youth is like engraving in stone.
+Arab World|Arabic|Wisdom|Ask the one who has lived it, not the one who has only studied it.
+Arab World|Arabic|Humility|Every fine horse has its stumble, and every scholar his slip.
+Arab World|Arabic|Focus|The dogs bark, but the caravan moves on.
+Arab World|Arabic|Resilience|Whoever wants the honey must endure the sting of the bees.
+Arab World|Arabic|Self-Mastery|Anything pushed beyond its limit turns into its opposite.
+Arab World|Arabic|Resilience|Every knot has someone who can untie it.
+Arab World|Arabic|Character|Whoever digs a pit for his brother falls into it himself.
+Arab World|Arabic|Leadership|Give the bread to the baker, even if he eats half of it.
+Arab World|Arabic|Wealth|Live together like brothers, but do business like strangers.
+Arab World|Arabic|Preparation|The jar does not come back unbroken every time.
+Arab World|Arabic|Wealth|Save your white coin for your black day.
+Iran|Persian|Self-Mastery|The red tongue can cost the green head.
+Iran|Persian|Change|Every peak has its decline.
+Iran|Persian|Community|Mountains never meet, but people always do.
+Iran|Persian|Gratitude|Never throw stones into the well you once drank from.
+Iran|Persian|Action|Whenever you take the fish from the water, it is fresh.
+Iran|Persian|Patience|One flower does not make the spring.
+Turkey|Turkish|Self-Mastery|No matter how far you have traveled down the wrong road, turn back.
+Turkey|Turkish|Community|One cup of coffee is remembered for forty years.
+Turkey|Turkish|Responsibility|The one who falls by his own doing does not cry.
+Turkey|Turkish|Discipline|The iron that is worked is the iron that shines.
+Turkey|Turkish|Kindness|A sweet tongue draws the snake from its hole.
+Turkey|Turkish|Generosity|Do a good deed and throw it into the sea; if the fish do not know, the Creator will.
+Turkey|Turkish|Learning|A tree is bent while it is young.
+Turkey|Turkish|Community|The one who seeks a flawless friend remains without friends.
+Turkey|Turkish|Self-Mastery|The one who rises in anger sits down in loss.
+Turkey|Turkish|Resilience|The one who loves the rose endures its thorns.
+Turkey|Turkish|Perspective|There is some good hidden in every matter.
+Turkey|Turkish|Learning|The one who has lived long does not know as much as the one who has traveled far.
+Turkey|Turkish|Community|A thousand friends are too few; one enemy is too many.
+Eastern Europe (Jewish)|Yiddish|Humility|Man plans, and God laughs.
+Eastern Europe (Jewish)|Yiddish|Truth|A half-truth is a whole lie.
+Eastern Europe (Jewish)|Yiddish|Action|If you want your dreams to come true, do not sleep.
+Eastern Europe (Jewish)|Yiddish|Truth|The truth never dies, but it lives a wretched life.
+Eastern Europe (Jewish)|Yiddish|Resilience|When one must, one can.
+Eastern Europe (Jewish)|Yiddish|Wisdom|A wise person hears one word and understands two.
+Eastern Europe (Jewish)|Yiddish|Resilience|If you cannot go over, you must go under.
+Eastern Europe (Jewish)|Yiddish|Character|Do not be so sweet that you are swallowed, nor so bitter that you are spat out.
+Eastern Europe (Jewish)|Yiddish|Wealth|With money in your pocket, you are wise, you are handsome, and you sing well too.
+Afghanistan|Pashto-Dari|Perseverance|There is a path to the top of even the highest mountain.
+Afghanistan|Pashto-Dari|Purpose|If you deal in camels, make the doors high.

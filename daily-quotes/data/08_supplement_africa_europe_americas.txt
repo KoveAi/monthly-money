@@ -1,0 +1,77 @@
+# Origin|Language|Theme|Quote (English translation)
+Nigeria|Yoruba|Community|A child's hand cannot reach the high shelf, and an elder's hand cannot fit into the gourd.
+Nigeria|Yoruba|Resilience|When the king's palace burns down, the rebuilding only adds to its beauty.
+Nigeria|Igbo|Learning|The fly that has no one to advise it follows the corpse into the grave.
+Nigeria|Hausa|Learning|Ignorance is darker than the night.
+Ghana|Akan|Humility|The stick used to beat one person will one day be used to beat another.
+Ghana|Akan|Community|When a single tree faces the wind, it breaks.
+Kenya|Kikuyu|Time|No day dawns exactly like another.
+Kenya|Kikuyu|Learning|The child who has never traveled thinks only their mother cooks well.
+Rwanda|Kinyarwanda|Courage|The little bird that has never flown does not know where the grain is ripe.
+South Africa|Zulu|Responsibility|No elephant is burdened by its own trunk.
+South Africa|Zulu|Leadership|A king is a king because of the people.
+East Africa|Swahili|Character|One who cannot accept defeat is no competitor.
+East Africa|Swahili|Action|Luck does not come twice.
+East Africa|Swahili|Wealth|A good thing sells itself; a bad thing has to be peddled.
+East Africa|Swahili|Self-Mastery|The one who is choosy about the hoe is no farmer.
+East Africa|Swahili|Community|A guest for two days; on the third day, hand them a hoe.
+East Africa|Swahili|Family|As you raise a child, so the child grows.
+East Africa|Swahili|Resilience|To slip is not to fall.
+East Africa|Swahili|Character|A promise is a debt.
+East Africa|Swahili|Self-Belief|Every bird flies with its own wings.
+East Africa|Swahili|Wealth|Wisdom is wealth.
+Somalia|Somali|Learning|The one who has not traveled has no eyes.
+Madagascar|Malagasy|Humility|The canoe does not know who is king; when it capsizes, everyone gets wet.
+Old Norse|Old Norse (Hávamál)|Legacy|Cattle die, kinsmen die, and you yourself will die; but a good name never dies for the one who has earned it.
+Old Norse|Old Norse (Hávamál)|Self-Mastery|The foolish man lies awake all night worrying; when morning comes he is weary, and his troubles are just as they were.
+Old Norse|Old Norse (Hávamál)|Action|Much is lost by the one who sleeps late; wealth is half won by the one who is quick.
+Old Norse|Old Norse (Hávamál)|Community|Be a friend to your friend, and repay gift with gift.
+Old Norse|Old Norse (Hávamál)|Wisdom|No better burden can a traveler carry on the road than a store of wisdom.
+Old Norse|Old Norse (Hávamál)|Purpose|The lame can ride, the handless can herd, the deaf can still fight well; everyone living has a use.
+Old Norse|Old Norse (Hávamál)|Generosity|The generous and the bold live the best lives and seldom nurse sorrow.
+Russia|Russian|Self-Mastery|A word is not a sparrow: once it flies out, you will not catch it.
+Russia|Russian|Perseverance|Patience and labor will grind through anything.
+Russia|Russian|Perseverance|The road is conquered by the one who walks it.
+Russia|Russian|Community|Perish yourself if you must, but rescue your comrade.
+Russia|Russian|Self-Belief|It is not the gods who fire the pots.
+Russia|Russian|Resilience|The first pancake always comes out lumpy.
+Russia|Russian|Character|The coin is small, but it is precious.
+Russia|Russian|Character|They greet you by your clothes, but they see you off by your mind.
+Poland|Polish|Character|The wolf carried off sheep many times, until one day they carried off the wolf.
+Spain|Spanish|Resilience|If you want the egg, you must put up with the hen.
+Spain|Spanish|Character|Courtesy does not take away courage.
+Spain|Spanish|Wealth|Clear accounts make for long friendships.
+France|French|Self-Belief|Help yourself, and heaven will help you.
+Germany|German|Action|Tomorrow, tomorrow, just not today, say all the lazy people.
+Germany|German|Patience|With time comes counsel.
+Netherlands|Dutch|Perspective|As the innkeeper is, so he trusts his guests.
+Sweden|Swedish|Wisdom|Better to retreat than to fight badly.
+Finland|Finnish|Learning|Learning will never tip you into a ditch.
+Finland|Finnish|Preparation|Better a mile of detour than an inch of danger.
+Romania|Romanian|Purpose|It is the person who makes the place sacred.
+Romania|Romanian|Kindness|What you do not like, do not do to another.
+Bulgaria|Bulgarian|Discipline|Rushed work brings shame to the master.
+Serbia|Serbian|Learning|Without struggle, there is no learning.
+Greece|Greek|Wisdom|Too many words are a kind of poverty.
+Ireland|Irish|Time|Time is a good storyteller.
+Ireland|Irish|Self-Mastery|Do not break your shin on a stool that is not in your way.
+Ireland|Irish|Learning|The one who travels has stories to tell.
+England|English|Preparation|A stitch in time saves nine.
+England|English|Truth|The proof of the pudding is in the eating.
+England|English|Action|Actions speak louder than words.
+England|English|Self-Mastery|Do not cross the bridge until you come to it.
+England|English|Character|Practice what you preach.
+Latin America|Spanish|Resilience|God squeezes, but He does not strangle.
+Latin America|Spanish|Resilience|Through a bad stretch, move quickly.
+Puerto Rico|Spanish|Humility|Every hawk has its kingbird.
+Brazil|Portuguese|Resilience|Hope is the last thing to die.
+Jamaica|Jamaican Patois|Perseverance|The rain may be falling, but the ground is still hard.
+United States (African American)|English|Resilience|Make a way out of no way.
+New Zealand|Māori|Self-Belief|Although it is small, it is greenstone.
+New Zealand|Māori|Resilience|Turn your face to the sun, and the shadows will fall behind you.
+New Zealand|Māori|Leadership|With feathers, the bird can fly.
+New Zealand|Māori|Legacy|When one fern frond dies, another rises to take its place.
+Hawaii|Hawaiian|Perseverance|No cliff is so tall that it cannot be climbed.
+Hawaii|Hawaiian|Community|Unite to move forward.
+Hawaii|Hawaiian|Community|Paddle the canoes together; bail and paddle, paddle and bail, and the shore will be reached.
+Hawaii|Hawaiian|Character|Keep doing what is right until the heavens come down to you.
