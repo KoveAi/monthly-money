@@ -8,35 +8,68 @@
 const PAGE_W_IN = 8.5;
 const PAGE_H_IN = 11;
 const MARGIN_IN = 0.35;
-const RENDER_WIDTH = 1000; // lay the sheet out at desktop width, not phone width
+// The sheet's own type (7–11px) was set for a full-width print and comes out
+// unreadably small on letter paper. For the PDF it is laid out about 720px wide
+// (roughly 0.78pt per px on the page) with every font enlarged 1.5x and never
+// below 12px, so the smallest text prints at roughly 9pt. If the table still
+// needs more room, the layout widens to fit it rather than cutting columns off.
+const BASE_WIDTH = 720;
+const FONT_SCALE = 1.5;
+const MIN_FONT_PX = 12;
 const SCALE = 2;
+
+/** Lay out an off-screen copy of the sheet at print size and measure it. */
+function stage(el: HTMLElement) {
+  const box = document.createElement("div");
+  box.setAttribute("aria-hidden", "true");
+  box.style.cssText = `position:absolute;left:-20000px;top:0;width:${BASE_WIDTH}px;background:#fff;`;
+  box.innerHTML = el.innerHTML;
+  document.body.appendChild(box);
+
+  box.querySelectorAll<HTMLElement>(".mm-bar").forEach((n) => { n.style.display = "none"; });
+  box.querySelectorAll<HTMLElement>(".scroll").forEach((n) => { n.style.overflow = "visible"; });
+  const sheet = box.querySelector<HTMLElement>(".sheet");
+  if (sheet) { sheet.style.margin = "0"; sheet.style.maxWidth = "none"; sheet.style.boxShadow = "none"; }
+
+  // Read every size first, then write, so enlarged parents don't compound.
+  const all = Array.from(box.querySelectorAll<HTMLElement>("*"));
+  const sizes = all.map((n) => parseFloat(getComputedStyle(n).fontSize) || 11);
+  all.forEach((n, i) => { n.style.fontSize = `${Math.max(sizes[i] * FONT_SCALE, MIN_FONT_PX)}px`; });
+
+  // Widen until nothing overflows (wide tables, long notes).
+  const widest = Math.max(BASE_WIDTH, ...Array.from(box.querySelectorAll<HTMLElement>("table, .sheet"))
+    .map((n) => Math.ceil(n.scrollWidth)));
+  box.style.width = `${widest}px`;
+
+  const top = box.getBoundingClientRect().top;
+  const breaks = Array.from(box.querySelectorAll<HTMLElement>("tr, .band, .band-note, .urgency, .empty, .footer, .source"))
+    .map((n) => n.getBoundingClientRect().bottom - top)
+    .filter((y) => y > 0)
+    .sort((a, b) => a - b);
+
+  return { box, width: Math.ceil(box.scrollWidth), height: Math.ceil(box.scrollHeight), breaks };
+}
 
 export async function buildSheetPdf(el: HTMLElement, fileName: string): Promise<File> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
 
-  // Bottom edges (CSS px from the top of the sheet) where a page may break.
-  let breaks: number[] = [];
-  const canvas = await html2canvas(el, {
-    scale: SCALE,
-    backgroundColor: "#ffffff",
-    windowWidth: RENDER_WIDTH,
-    useCORS: true,
-    logging: false,
-    onclone: (doc) => {
-      const root = doc.getElementById(el.id);
-      if (!root) return;
-      doc.querySelectorAll<HTMLElement>(".mm-bar").forEach((n) => { n.style.display = "none"; });
-      doc.querySelectorAll<HTMLElement>(".scroll").forEach((n) => { n.style.overflow = "visible"; });
-      const sheet = root.querySelector<HTMLElement>(".sheet");
-      if (sheet) { sheet.style.margin = "0 auto"; sheet.style.boxShadow = "none"; }
-      const top = root.getBoundingClientRect().top;
-      breaks = Array.from(root.querySelectorAll<HTMLElement>("tr, .band, .band-note, .urgency, .empty, .footer, .source"))
-        .map((n) => n.getBoundingClientRect().bottom - top)
-        .filter((y) => y > 0)
-        .sort((a, b) => a - b);
-    },
-  });
+  const { box, width, height, breaks } = stage(el);
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(box, {
+      scale: SCALE, backgroundColor: "#ffffff", useCORS: true, logging: false,
+      width, height, windowWidth: width, windowHeight: height, x: 0, y: 0, scrollX: 0, scrollY: 0,
+      onclone: (doc) => {
+        // The copy is captured where it sits; bring it on-screen inside the clone.
+        const copy = Array.from(doc.body.children).find((n) => n.getAttribute("aria-hidden") === "true"
+          && (n as HTMLElement).style.left === "-20000px") as HTMLElement | undefined;
+        if (copy) { copy.style.left = "0"; }
+      },
+    });
+  } finally {
+    box.remove();
+  }
 
   const pdf = new jsPDF({ unit: "in", format: "letter", orientation: "portrait" });
   const usableW = PAGE_W_IN - 2 * MARGIN_IN;
