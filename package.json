@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
+    "html2canvas": "^1.4.1",
     "iron-session": "9.0.1",
+    "jspdf": "^2.5.2",
     "next": "15.5.27",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
