@@ -7,6 +7,7 @@ import { ExpenseTable, type Expense } from "@/components/ExpenseTable";
 import { TrimPlan } from "@/components/TrimPlan";
 import { AdvisorPanel } from "@/components/AdvisorPanel";
 import { buildPaySheet, inWindowMonth } from "@/lib/paySheet";
+import { SHEET_KEY, RETURN_MONTH_KEY } from "@/lib/sheetHandoff";
 import { computeStatus } from "@/lib/status";
 import { effectivePaid, effectiveRemaining, budgetAmount, owedAmount, isBusinessItem, isMarketingItem, movePatch, type MoveTarget } from "@/lib/finance";
 
@@ -59,6 +60,13 @@ function fmtMonth(mk: string) {
 export default function DashboardPage() {
   const router = useRouter();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey);
+  // Coming back from the printable sheet: return to the month it was printed from.
+  useEffect(() => {
+    try {
+      const m = sessionStorage.getItem(RETURN_MONTH_KEY);
+      if (m) { sessionStorage.removeItem(RETURN_MONTH_KEY); if (/^\d{4}-\d{2}$/.test(m)) setMonthKey(m); }
+    } catch { /* storage unavailable: stay on the current month */ }
+  }, []);
   // The whole ledger is loaded once: the month views filter it locally and the
   // planner needs every month anyway to average across them.
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
@@ -504,15 +512,13 @@ export default function DashboardPage() {
     const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     const sheet = buildPaySheet({ entries: allExpenses, monthKey, window: period, today });
 
-    const w = window.open("", "_blank");
-    if (!w) { alert("Allow pop-ups for this site to open the sheet."); return; }
-    w.document.write(sheet.document);
-    w.document.close();
-    w.document.title = sheet.summary.slug;
-    // Wait for the web fonts, or the first print lays out in a fallback face.
-    const print = () => w.setTimeout(() => w.print(), 350);
-    if (w.document.readyState === "complete") print();
-    else w.addEventListener("load", print);
+    // Same tab, no auto-print: phones block print() without a tap, and a pop-up
+    // window has no way back to the app. The sheet page adds Back and Print buttons.
+    try {
+      sessionStorage.setItem(SHEET_KEY, sheet.document);
+      sessionStorage.setItem(RETURN_MONTH_KEY, monthKey);
+    } catch { alert("Couldn't open the sheet. Turn off private browsing and try again."); return; }
+    window.location.assign("/dashboard/sheet");
   }
 
   function renderPeriod(period: "a" | "b") {
