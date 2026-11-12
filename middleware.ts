@@ -5,9 +5,11 @@ import { requireHousehold } from "@/lib/api-security";
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   let response: NextResponse;
-  if (path.startsWith("/api/") && path !== "/api/auth/login") {
+  const publicAuth = path === "/api/auth/login" || path === "/api/auth/passkey/login-options" ||
+    path === "/api/auth/passkey/login";
+  if (path.startsWith("/api/") && !publicAuth) {
     response = await requireHousehold(request) ?? NextResponse.next();
-  } else if (path !== "/login" && path !== "/api/auth/login" &&
+  } else if (path !== "/login" && !publicAuth &&
              !await hasValidSession(request.cookies.get(COOKIE_NAME)?.value)) {
     // The destination is fixed; no user-controlled return URL can redirect off-site.
     response = NextResponse.redirect(new URL("/login", request.url));
